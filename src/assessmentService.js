@@ -94,7 +94,7 @@ class AssessmentService {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply rigorous professional standards and be thorough in your assessments. Documentation must clearly demonstrate safe clinical practice and comprehensive record-keeping. Missing or inadequate documentation should be highlighted even if it does not pose immediate safety risk. Only rate as "acceptable" when documentation clearly meets professional standards. When uncertain between ratings, apply the more critical assessment to encourage higher documentation standards.'
+            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply professional standards with balanced judgment. Documentation should demonstrate safe clinical practice and good record-keeping. Be thorough in your assessments, recognizing that good clinical practice may be present even when documentation is concise. Rate as "acceptable" when documentation meets professional standards and demonstrates safe practice. When uncertain between ratings, consider the clinical context and whether patient safety is maintained.'
           },
           {
             role: 'user',
