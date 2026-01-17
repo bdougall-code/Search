@@ -195,7 +195,7 @@ app.get('/api/assessments/:id', async (req, res) => {
 // Rapid Review (2 consultations)
 app.post('/api/audit/rapid-review', async (req, res) => {
   try {
-    const { consultationData, doctorInitials } = req.body;
+    const { consultationData, doctorInitials, referenceNumber } = req.body;
     
     if (!consultationData) {
       return res.status(400).json({ error: 'Consultation data is required' });
@@ -217,9 +217,12 @@ app.post('/api/audit/rapid-review', async (req, res) => {
     console.log(`Starting Rapid Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
     const results = await auditService.conductRapidReview(consultationData);
     
-    // Add doctor initials to results
+    // Add doctor initials and reference number to results
     if (doctorInitials) {
       results.doctorInitials = doctorInitials;
+    }
+    if (referenceNumber) {
+      results.referenceNumber = referenceNumber;
     }
     
     res.status(200).json(results);
@@ -232,7 +235,7 @@ app.post('/api/audit/rapid-review', async (req, res) => {
 // Full Review (10+ consultations)
 app.post('/api/audit/full-review', async (req, res) => {
   try {
-    const { consultationData, doctorInitials } = req.body;
+    const { consultationData, doctorInitials, referenceNumber } = req.body;
     
     if (!consultationData) {
       return res.status(400).json({ error: 'Consultation data is required' });
@@ -254,9 +257,12 @@ app.post('/api/audit/full-review', async (req, res) => {
     console.log(`Starting Full Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
     const results = await auditService.conductFullReview(consultationData);
     
-    // Add doctor initials to results
+    // Add doctor initials and reference number to results
     if (doctorInitials) {
       results.doctorInitials = doctorInitials;
+    }
+    if (referenceNumber) {
+      results.referenceNumber = referenceNumber;
     }
     
     res.status(200).json(results);
