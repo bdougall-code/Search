@@ -94,7 +94,7 @@ class AssessmentService {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply professional standards with balanced judgment. Documentation should demonstrate safe clinical practice and good record-keeping. Be thorough in your assessments, recognizing that good clinical practice may be present even when documentation is concise. Rate as "acceptable" when documentation meets professional standards and demonstrates safe practice. When uncertain between ratings, consider the clinical context and whether patient safety is maintained.'
+            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply professional standards with balanced and fair judgment. Documentation should demonstrate safe clinical practice and appropriate record-keeping. Recognize that good clinical practice can be present with concise documentation. Rate as "acceptable" when documentation meets reasonable professional standards and demonstrates safe practice. When uncertain between ratings, give the benefit of the doubt if patient safety is maintained and key information is recorded.'
           },
           {
             role: 'user',
