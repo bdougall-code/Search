@@ -72,6 +72,20 @@ class AssessmentService {
    * @returns {Promise<Object>}
    */
   async assessSingleCriterion(consultationText, criterion) {
+    // Special handling for criterion 2 - Read coding
+    if (criterion.id === 2) {
+      const hasReadCode = this.checkForReadCode(consultationText);
+      if (hasReadCode) {
+        return {
+          criterionId: criterion.id,
+          criterionTitle: criterion.title,
+          rating: 'acceptable',
+          explanation: 'Problem is appropriately documented and coded. "Problem:" field is present with a diagnosis.',
+          evidence: this.extractEvidence(consultationText, criterion)
+        };
+      }
+    }
+    
     // Special handling for criterion 12 - check if there are any test results mentioned
     if (criterion.id === 12) {
       const hasTestResults = this.checkForTestResults(consultationText);
@@ -94,7 +108,7 @@ class AssessmentService {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply professional standards with balanced and fair judgment. Documentation should demonstrate safe clinical practice and appropriate record-keeping. Recognize that good clinical practice can be present with concise documentation. Rate as "acceptable" when documentation meets reasonable professional standards and demonstrates safe practice. When uncertain between ratings, give the benefit of the doubt if patient safety is maintained and key information is recorded.'
+            content: 'You are an expert medical auditor assessing GP consultation notes with a balanced and supportive approach. Apply professional standards fairly, recognizing that good clinical practice can be demonstrated through concise, focused documentation. Documentation should demonstrate safe patient care and appropriate record-keeping. Rate as "acceptable" when key clinical information is present and patient safety is ensured, even if documentation is brief. When uncertain between ratings, favor the more favorable assessment if patient safety is maintained and essential information is captured. Focus on whether the clinician has demonstrated safe practice rather than perfect documentation.'
           },
           {
             role: 'user',
@@ -136,6 +150,22 @@ class AssessmentService {
     
     const lowerText = consultationText.toLowerCase();
     return testKeywords.some(keyword => lowerText.includes(keyword));
+  }
+
+  /**
+   * Check if consultation has Read code - looks for "Problem:" followed by a diagnosis
+   */
+  checkForReadCode(consultationText) {
+    // Check for "Problem:" or "Problem" followed by text (diagnosis)
+    const problemPattern = /Problem:?\s+([A-Za-z][A-Za-z0-9\s,.-]+)/i;
+    const match = consultationText.match(problemPattern);
+    
+    if (match && match[1].trim().length > 2) {
+      // Found "Problem:" followed by actual text (diagnosis)
+      return true;
+    }
+    
+    return false;
   }
 
   /**
@@ -269,20 +299,8 @@ Provide a brief overall assessment summary (2-3 sentences) highlighting the main
    * Generate specific recommendations for improvement
    */
   async generateRecommendations(criteriaAssessments, scoreData) {
-    const issues = criteriaAssessments.filter(
-      a => a.rating === 'concern' || a.rating === 'unacceptable'
-    );
-    
-    if (issues.length === 0) {
-      return ['Excellent work. Continue maintaining high documentation standards.'];
-    }
-    
-    const recommendations = issues.map(issue => {
-      const priority = issue.rating === 'unacceptable' ? 'HIGH PRIORITY' : 'IMPORTANT';
-      return `[${priority}] ${issue.criterionTitle}: ${issue.explanation}`;
-    });
-    
-    return recommendations;
+    // Recommendations removed as they duplicate the detailed criteria assessment
+    return [];
   }
 }
 
