@@ -1327,25 +1327,6 @@
             html += `
                         </ul>
                     </div>
-
-                    <div class="analysis-section">
-                        <h3>💡 Recommendations</h3>
-            `;
-
-            analysis.recommendations.forEach(rec => {
-                html += `
-                    <div style="margin-bottom: 15px;">
-                        <span class="recommendation-badge priority-${rec.priority}">${rec.priority}</span>
-                        <strong>${rec.area}</strong>
-                        <ul style="margin-top: 10px; margin-left: 40px;">
-                            ${rec.details.map(d => `<li>${d}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            });
-
-            html += `
-                    </div>
                 </div>
             `;
 
@@ -1399,13 +1380,6 @@
 
             html += `
                         </div>
-
-                        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                            <strong>Recommendations:</strong>
-                            <ul style="margin-top: 10px; margin-left: 20px;">
-                                ${assessment.recommendations.map(r => `<li>${r}</li>`).join('')}
-                            </ul>
-                        </div>
                     </div>
                 </div>
             `;
@@ -1440,6 +1414,9 @@
         function generateTextReport(results) {
             let report = `MEDICAL CONSULTATION AUDIT REPORT\n`;
             report += `${'='.repeat(60)}\n\n`;
+            if (results.referenceNumber) {
+                report += `Reference Number: ${results.referenceNumber}\n`;
+            }
             if (results.doctorInitials) {
                 report += `Doctor: ${results.doctorInitials}\n`;
             }
