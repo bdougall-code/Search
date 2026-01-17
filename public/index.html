@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GP Consultation Assessment System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 0;
+        }
+
+        .nav-header {
+            background: #2d2d2d;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 2rem;
+        }
+
+        .nav-header nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-header .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-left: auto;
+        }
+
+        .nav-header a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-header a:hover {
+            color: #667eea;
+        }
+
+        .nav-header a.active {
+            color: #667eea;
+        }
+        
+        .page-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 100px);
+            padding: 20px;
+        }
+        
+        .container {
+            background: #2d2d2d;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #e0e0e0;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .action-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .action-card h2 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .action-card p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .action-card .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .secondary-card {
+            background: #3d3d3d;
+            color: #e0e0e0;
+        }
+
+        .secondary-card:hover {
+            background: #4d4d4d;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .info-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #3d3d3d;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+        .learn-more-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .learn-more-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .modal-content {
+            background: #2d2d2d;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            color: #e0e0e0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #e0e0e0;
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h3 {
+            color: #e0e0e0;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .modal-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .highlight-box {
+            background: #3d3d3d;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <nav>
+            <a href="/" class="logo">🏥 GP Assessment</a>
+            <div class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/audit.html">Audit System</a>
+                <a href="/search.html">Search</a>
+            </div>
+        </nav>
+    </div>
+    <div class="page-wrapper">
+    <div class="container">
+        <h1>🏥 GP Consultation Assessment System</h1>
+        <p class="subtitle">AI-powered clinical documentation assessment using OpenAI</p>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button class="learn-more-btn" onclick="openModal()">📚 Learn More</button>
+        </div>
+        
+        <!-- GDPR Compliance Notice -->
+        <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 40px;">🔒</div>
+                <div>
+                    <h3 style="margin: 0 0 8px 0; font-size: 18px;">GDPR Compliant & Data Protected</h3>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
+                        This system includes <strong>multi-layer PII validation</strong> to prevent submission of patient identifiable information (NHS numbers, names, DOB, postcodes). 
+                        All consultation data must be anonymized before submission. Real-time validation blocks high-risk PII and highlights potential issues.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="card-grid">
+            <a href="/audit.html" class="action-card">
+                <div class="icon">🔍</div>
+                <h2>Medical Audit System</h2>
+                <p>Conduct Rapid Reviews (2 notes) or Full Reviews (10+ notes) with comprehensive analytics</p>
+            </a>
+
+            <a href="/search.html" class="action-card secondary-card">
+                <div class="icon" style="color: #667eea;">📊</div>
+                <h2>View Assessments</h2>
+                <p>Search and review previous consultation assessments and ratings</p>
+            </a>
+        </div>
+
+        <div class="info-box">
+            <strong>Audit Types:</strong>
+            <ul>
+                <li><strong>Rapid Review:</strong> Quick audit of exactly 2 consultations for spot checks</li>
+                <li><strong>Full Review:</strong> Comprehensive audit of 10+ consultations with detailed analytics</li>
+            </ul>
+            <br>
+            <strong>Assessment Criteria:</strong> Clinical documentation standards based on UK GP best practice (12 comprehensive criteria)
+            <br><br>
+            <strong>RAG Ratings:</strong>
+            <ul>
+                <li><strong style="color: #4caf50;">Green (90-100%):</strong> Excellent documentation</li>
+                <li><strong style="color: #ffeb3b; background: #333; padding: 2px 6px; border-radius: 3px;">Yellow (70-89%):</strong> Good with minor issues</li>
+                <li><strong style="color: #ff9800;">Amber (50-69%):</strong> Needs improvement</li>
+                <li><strong style="color: #f44336;">Red (&lt;50%):</strong> Unacceptable</li>
+            </ul>
+            <br>
+            <strong>AI Assessment Guidance (GPT-4o-mini):</strong>
+            <details style="margin-top: 10px;">
+                <summary style="cursor: pointer; font-weight: bold; color: #667eea; padding: 5px 0;">📋 Click to view assessment methodology</summary>
+                <div style="margin-top: 10px; padding: 15px; background: #2d2d2d; border-left: 4px solid #667eea; border-radius: 4px;">
+                    <p style="margin-bottom: 10px; color: #e0e0e0;">Each consultation is assessed against 12 clinical criteria using AI with the following principles:</p>
+                    <ul style="margin-left: 20px; color: #e0e0e0;">
+                        <li><strong>Constructive & Supportive:</strong> Focus on what IS documented well</li>
+                        <li><strong>Clinical Context:</strong> Brief notes for routine issues are acceptable</li>
+                        <li><strong>Patient Safety First:</strong> "Unacceptable" only for clear safety concerns or major omissions</li>
+                        <li><strong>Benefit of the Doubt:</strong> When deciding between ratings, lean towards the more favorable option</li>
+                        <li><strong>Reasonable Practice:</strong> Credit given for adequate clinical documentation even if not perfect</li>
+                        <li><strong>Three-Tier Rating:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><strong>Acceptable (A):</strong> Meets professional standards - 100% credit</li>
+                                <li><strong>Concern (C):</strong> Notable issues without immediate safety risk - 60% credit</li>
+                                <li><strong>Unacceptable (U):</strong> Clear patient safety concern or major omission - 0% credit</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p style="margin-top: 10px; font-style: italic; color: #a0a0a0;">All 12 criteria are assessed simultaneously using parallel processing for speed (~30 seconds per consultation).</p>
+                </div>
+            </details>
+        </div>
+    </div>
+    </div>
+
+    <!-- Learn More Modal -->
+    <div id="learnMoreModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2>📋 About GP Consultation Audits</h2>
+            
+            <h3>Why Are GP Consultation Audits Important?</h3>
+            <p>GP consultation audits are a critical component of clinical governance and quality assurance in primary care. They serve several vital purposes:</p>
+            
+            <ul>
+                <li><strong>Patient Safety:</strong> Audits help identify potential gaps in documentation that could affect patient care and safety, ensuring all critical information is recorded.</li>
+                <li><strong>Clinical Excellence:</strong> Regular review of consultation records promotes high standards of clinical documentation and helps maintain best practices.</li>
+                <li><strong>Professional Development:</strong> Audits provide constructive feedback to clinicians, highlighting areas of strength and opportunities for improvement.</li>
+                <li><strong>Medico-Legal Protection:</strong> Comprehensive and accurate documentation protects both patients and clinicians by providing a clear record of clinical decision-making.</li>
+                <li><strong>CQC Compliance:</strong> The Care Quality Commission expects GP practices to have robust quality assurance processes, including regular consultation audits.</li>
+                <li><strong>Appraisal & Revalidation:</strong> Audit evidence supports GMC revalidation requirements and demonstrates ongoing commitment to quality improvement.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>🏥 NHS England Framework</strong><br>
+                This assessment system is based on the NHS England template for GP consultation audits, incorporating the 12 core criteria that reflect national standards for clinical documentation in primary care.
+            </div>
+
+            <h3>The 12 Assessment Criteria</h3>
+            <p>Each consultation is evaluated against 12 comprehensive criteria covering:</p>
+            <ul>
+                <li>Patient identification and demographics</li>
+                <li>Presenting complaint documentation</li>
+                <li>History taking (symptoms, duration, severity)</li>
+                <li>Examination findings and clinical assessment</li>
+                <li>Diagnosis or working diagnosis</li>
+                <li>Management plan and treatment</li>
+                <li>Safety netting and follow-up</li>
+                <li>Red flags and risk assessment</li>
+                <li>Information provided to patient</li>
+                <li>Prescribing documentation (when applicable)</li>
+                <li>Professional standards and communication</li>
+                <li>Record completeness and clarity</li>
+            </ul>
+
+            <h3>How This System Works</h3>
+            <p>Using OpenAI's GPT-4 technology, this system provides:</p>
+            <ul>
+                <li><strong>Rapid Reviews:</strong> Quick assessment of 2 consultations for spot checks</li>
+                <li><strong>Full Reviews:</strong> Comprehensive analysis of 10+ consultations with detailed analytics</li>
+                <li><strong>RAG Ratings:</strong> Clear Red/Amber/Green ratings based on overall scores</li>
+                <li><strong>Constructive Feedback:</strong> Specific, actionable recommendations for improvement</li>
+                <li><strong>GDPR Compliance:</strong> Multi-layer PII validation to ensure patient anonymization</li>
+            </ul>
+
+            <p style="margin-top: 20px; font-style: italic; color: #a0a0a0;">This tool is designed to support clinical teams in maintaining the highest standards of care through regular, objective assessment of consultation documentation.</p>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('learnMoreModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('learnMoreModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('learnMoreModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

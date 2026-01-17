@@ -1,0 +1,29 @@
+{
+  "name": "ai-search-mongodb",
+  "version": "1.0.0",
+  "description": "AI-powered search with MongoDB vector search",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "ai",
+    "search",
+    "mongodb",
+    "vector-search",
+    "embeddings"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@huggingface/inference": "^4.13.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongodb": "^6.3.0",
+    "openai": "^4.104.0",
+    "xlsx": "^0.18.5"
+  }
+}

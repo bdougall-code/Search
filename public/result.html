@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Result</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 0;
+            color: #e0e0e0;
+        }
+
+        .nav-header {
+            background: #2d2d2d;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 2rem;
+        }
+
+        .nav-header nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-header .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-left: auto;
+        }
+
+        .nav-header a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-header a:hover {
+            color: #667eea;
+        }
+
+        .nav-header a.active {
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 20px;
+        }
+
+        .header {
+            background: #2d2d2d;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: #2d2d2d;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0a0a0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-content {
+            display: none;
+        }
+
+        .result-content.active {
+            display: block;
+        }
+
+        .metadata-section {
+            background: #3d3d3d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metadata-item {
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 6px;
+        }
+
+        .metadata-label {
+            font-size: 12px;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .metadata-value {
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .score-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .score-number {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .rag-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
+        .rag-GREEN {
+            background: #4caf50;
+            color: white;
+        }
+
+        .rag-YELLOW {
+            background: #ffeb3b;
+            color: #333;
+        }
+
+        .rag-AMBER {
+            background: #ff9800;
+            color: white;
+        }
+
+        .rag-RED {
+            background: #f44336;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .section h3 {
+            color: #e0e0e0;
+        }
+
+        .consultation-text {
+            background: #3d3d3d;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #e0e0e0;
+        }
+
+        .criteria-list {
+            margin-top: 20px;
+        }
+
+        .criterion-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #5d5d5d;
+            transition: transform 0.2s;
+            background: #3d3d3d;
+        }
+
+        .criterion-item:hover {
+            transform: translateX(5px);
+        }
+
+        .criterion-item.acceptable {
+            background: #1a3a1a;
+            border-left-color: #4caf50;
+        }
+
+        .criterion-item.concern {
+            background: #3a2a1a;
+            border-left-color: #ff9800;
+        }
+
+        .criterion-item.unacceptable {
+            background: #3a1a1a;
+            border-left-color: #f44336;
+        }
+
+        .criterion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .criterion-title {
+            font-weight: 600;
+            color: #e0e0e0;
+            flex: 1;
+        }
+
+        .criterion-rating {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 15px;
+        }
+
+        .rating-acceptable {
+            background: #4caf50;
+            color: white;
+        }
+
+        .rating-concern {
+            background: #ff9800;
+            color: white;
+        }
+
+        .rating-unacceptable {
+            background: #f44336;
+            color: white;
+        }
+
+        .criterion-explanation {
+            color: #a0a0a0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .summary-box {
+            background: #3d3d3d;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #e0e0e0;
+        }
+
+        .recommendations {
+            margin-top: 30px;
+        }
+
+        .recommendation-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: #3d3d3d;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            color: #e0e0e0;
+        }
+
+        .recommendation-item strong {
+            color: #667eea;
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .nav, .actions {
+                display: none;
+            }
+            .card {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <nav>
+            <a href="/" class="logo">🏥 GP Assessment</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/audit.html">Audit System</a>
+                <a href="/search.html">Search</a>
+            </div>
+        </nav>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>Assessment Result</h1>
+        </div>
+
+        <div class="card">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading assessment...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+
+            <div class="result-content" id="resultContent">
+                <!-- Metadata Section -->
+                <div class="metadata-section">
+                    <h3>Consultation Details</h3>
+                    <div class="metadata-grid" id="metadata"></div>
+                </div>
+
+                <!-- Score Header -->
+                <div class="score-header">
+                    <div>Overall Assessment Score</div>
+                    <div class="score-number" id="scoreNumber">--</div>
+                    <div id="ragBadge"></div>
+                    <div class="stats-grid" id="statsGrid"></div>
+                </div>
+
+                <!-- Overall Summary -->
+                <div class="section">
+                    <h2>Overall Assessment</h2>
+                    <div class="summary-box" id="overallSummary"></div>
+                </div>
+
+                <!-- RAG Action -->
+                <div class="section">
+                    <h2>Recommended Action</h2>
+                    <div class="summary-box" id="ragAction"></div>
+                </div>
+
+                <!-- Consultation Text -->
+                <div class="section">
+                    <h2>Consultation Record</h2>
+                    <div class="consultation-text" id="consultationText"></div>
+                </div>
+
+                <!-- Detailed Criteria Assessment -->
+                <div class="section">
+                    <h2>Detailed Criteria Assessment</h2>
+                    <div class="criteria-list" id="criteriaList"></div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="section">
+                    <h2>Recommendations for Improvement</h2>
+                    <div class="recommendations" id="recommendations"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
+                    <a href="/assessment.html" class="btn btn-secondary">➕ New Assessment</a>
+                    <a href="/search.html" class="btn btn-secondary">📊 All Assessments</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get assessment ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const assessmentId = urlParams.get('id');
+
+        if (!assessmentId) {
+            showError('No assessment ID provided');
+        } else {
+            loadAssessment(assessmentId);
+        }
+
+        async function loadAssessment(id) {
+            try {
+                console.log('Loading assessment with ID:', id);
+                console.log('ID length:', id.length);
+                console.log('Is valid hex?', /^[0-9a-fA-F]{24}$/.test(id));
+                
+                const response = await fetch(`/api/assessments/${id}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error('Server error:', data);
+                    throw new Error(data.error || 'Failed to load assessment');
+                }
+
+                displayAssessment(data.assessment);
+            } catch (error) {
+                console.error('Error loading assessment:', error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        function displayAssessment(data) {
+            const { assessment, consultationText, metadata } = data;
+            const { scoring, criteriaAssessments, overallSummary, recommendations } = assessment;
+
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('resultContent').classList.add('active');
+
+            // Display metadata
+            const metadataHtml = `
+                <div class="metadata-item">
+                    <div class="metadata-label">Patient Reference</div>
+                    <div class="metadata-value">${metadata.patientReference || 'N/A'}</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Consultation Date</div>
+                    <div class="metadata-value">${metadata.consultationDate || 'N/A'}</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Consultation Type</div>
+                    <div class="metadata-value">${metadata.consultationType || 'N/A'}</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Assessment Date</div>
+                    <div class="metadata-value">${new Date(metadata.assessmentDate).toLocaleDateString()}</div>
+                </div>
+            `;
+            document.getElementById('metadata').innerHTML = metadataHtml;
+
+            // Display score
+            document.getElementById('scoreNumber').textContent = scoring.percentage.toFixed(1) + '%';
+
+            // Display RAG badge
+            const ragHtml = `<span class="rag-badge rag-${scoring.ragRating.rating}">${scoring.ragRating.rating}</span>`;
+            document.getElementById('ragBadge').innerHTML = ragHtml;
+
+            // Display stats
+            const statsHtml = `
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #4caf50;">${scoring.acceptable}</div>
+                    <div class="stat-label">Acceptable</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #ff9800;">${scoring.concern}</div>
+                    <div class="stat-label">Concern</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #f44336;">${scoring.unacceptable}</div>
+                    <div class="stat-label">Unacceptable</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${scoring.total}</div>
+                    <div class="stat-label">Total Criteria</div>
+                </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = statsHtml;
+
+            // Display overall summary
+            document.getElementById('overallSummary').textContent = overallSummary;
+
+            // Display RAG action
+            document.getElementById('ragAction').innerHTML = `
+                <strong>${scoring.ragRating.description}</strong><br><br>
+                <strong>Action Required:</strong> ${scoring.ragRating.action}
+            `;
+
+            // Display consultation text
+            document.getElementById('consultationText').textContent = consultationText;
+
+            // Display criteria assessments
+            const criteriaHtml = criteriaAssessments.map(c => `
+                <div class="criterion-item ${c.rating}">
+                    <div class="criterion-header">
+                        <div class="criterion-title">
+                            <strong>${c.criterionId}.</strong> ${c.criterionTitle}
+                        </div>
+                        <span class="criterion-rating rating-${c.rating}">${c.rating}</span>
+                    </div>
+                    <div class="criterion-explanation">${c.explanation}</div>
+                </div>
+            `).join('');
+            document.getElementById('criteriaList').innerHTML = criteriaHtml;
+
+            // Display recommendations
+            if (recommendations && recommendations.length > 0) {
+                const recommendationsHtml = recommendations.map(r => `
+                    <div class="recommendation-item">${r}</div>
+                `).join('');
+                document.getElementById('recommendations').innerHTML = recommendationsHtml;
+            } else {
+                document.getElementById('recommendations').innerHTML = `
+                    <div class="recommendation-item">
+                        <strong style="color: #4caf50;">✓ Excellent work!</strong> No specific recommendations. Continue maintaining high documentation standards.
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

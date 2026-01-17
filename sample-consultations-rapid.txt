@@ -1,0 +1,37 @@
+Date		Consultation Text
+17-Dec-2024 14:15		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)  
+Problem		Pityriasis versicolor (First)
+		
+History		hx  noted
+		itchy sclap and  discolouration  in centrla scalp  and peripherla reginos.
+		no  red flags or skin  breaks
+		
+Medication		Clotrimazole 2% cream Apply Twice A Day 40 gram
+		Ketoconazole 2% shampoo Apply  two times per week  for  weeks . leave preparation sclap for 3-5 mins before rinsing  240 ml
+
+Date		Consultation Text
+17-Dec-2024 14:33		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)  
+History		w  parents
+		concern about  cracked lips of  months
+		no  hx of bowel  disorders  or malabsorption
+		diet limited at present to a few veges  no balalnce diet
+		
+Test Request		BLT Immunology - Unknown specimen
+		Test Request : Coeliac Screen (tTG)
+		BLT Blood Sciences - Unknown specimen
+		Test Request : Ferritin
+		Test Request : Serum Folate
+		Test Request : B12
+		Test Request : Renal Profile
+		Test Request : Vitamin E
+		Test Request : 25 OH Vitamin D
+		Test Request : Full Blood Count
+		
+Problem		O/E - dry/cracked lips (First)
+		
+Comment		increase hydration
+		reg  vaseline use
+		increase fuit and veg consumption
+		blood for vit def  inc b 12
+		
+Examination		minor cracks , otherwise healty oral caivty

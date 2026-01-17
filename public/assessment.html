@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GP Consultation Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 0;
+            color: #e0e0e0;
+        }
+
+        .nav-header {
+            background: #2d2d2d;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 2rem;
+        }
+
+        .nav-header nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-header .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-left: auto;
+        }
+
+        .nav-header a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-header a:hover {
+            color: #667eea;
+        }
+
+        .nav-header a.active {
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 20px;
+        }
+
+        h1 {
+            color: #e0e0e0;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .card {
+            background: #2d2d2d;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4d4d4d;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: #3d3d3d;
+            color: #e0e0e0;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .rag-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .rag-GREEN {
+            background: #4caf50;
+            color: white;
+        }
+
+        .rag-YELLOW {
+            background: #ffeb3b;
+            color: #333;
+        }
+
+        .rag-AMBER {
+            background: #ff9800;
+            color: white;
+        }
+
+        .rag-RED {
+            background: #f44336;
+            color: white;
+        }
+
+        .score-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .criteria-list {
+            margin-top: 20px;
+        }
+
+        .criterion-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #5d5d5d;
+            background: #3d3d3d;
+        }
+
+        .criterion-item.acceptable {
+            background: #1a3a1a;
+            border-left-color: #4caf50;
+        }
+
+        .criterion-item.concern {
+            background: #3a2a1a;
+            border-left-color: #ff9800;
+        }
+
+        .criterion-item.unacceptable {
+            background: #3a1a1a;
+            border-left-color: #f44336;
+        }
+
+        .criterion-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e0e0e0;
+        }
+
+        .criterion-explanation {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .summary-section {
+            background: #3d3d3d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .recommendations {
+            margin-top: 20px;
+        }
+
+        .recommendation-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #3d3d3d;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #3d3d3d;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #a0a0a0;
+        }
+
+        h2, h3 {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <nav>
+            <a href="/" class="logo">🏥 GP Assessment</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/audit.html">Audit System</a>
+                <a href="/assessment.html" class="active">New Assessment</a>
+                <a href="/search.html">Search</a>
+            </div>
+        </nav>
+    </div>
+    <div class="container">
+        <h1>🏥 GP Consultation Assessment</h1>
+
+        <div class="card">
+            <h2>Submit Consultation for Assessment</h2>
+            <form id="assessmentForm">
+                <div class="metadata-grid">
+                    <div class="form-group">
+                        <label for="patientRef">Patient Reference:</label>
+                        <input type="text" id="patientRef" placeholder="e.g., PT-12345">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultationDate">Consultation Date:</label>
+                        <input type="date" id="consultationDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultationType">Consultation Type:</label>
+                        <select id="consultationType">
+                            <option value="Surgery consultation (new)">Surgery consultation (new)</option>
+                            <option value="Surgery consultation (f/u)">Surgery consultation (f/u)</option>
+                            <option value="Telephone consultation">Telephone consultation</option>
+                            <option value="Home visit">Home visit</option>
+                            <option value="Video">Video</option>
+                            <option value="Econsult">Econsult</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="consultationText">Consultation Record:</label>
+                    <textarea id="consultationText" placeholder="Paste the complete GP consultation notes here..." required></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    🔍 Assess Consultation
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Assessing consultation with AI... This may take a minute.</p>
+                <p style="color: #666; font-size: 14px;">Analyzing 12 criteria using OpenAI GPT-4</p>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2>Assessment Results</h2>
+                
+                <div class="score-display">
+                    <div class="score-number" id="scoreNumber">--</div>
+                    <div>Overall Score</div>
+                    <div id="ragBadge"></div>
+                </div>
+
+                <div class="stats" id="stats"></div>
+
+                <div class="summary-section">
+                    <h3>Overall Assessment</h3>
+                    <p id="overallSummary"></p>
+                </div>
+
+                <h3 style="margin-top: 30px;">Detailed Criteria Assessment</h3>
+                <div class="criteria-list" id="criteriaList"></div>
+
+                <div class="recommendations">
+                    <h3>Recommendations</h3>
+                    <div id="recommendationsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('assessmentForm');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Set today's date as default
+        document.getElementById('consultationDate').valueAsDate = new Date();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const consultationText = document.getElementById('consultationText').value;
+            const patientRef = document.getElementById('patientRef').value;
+            const consultationDate = document.getElementById('consultationDate').value;
+            const consultationType = document.getElementById('consultationType').value;
+
+            if (!consultationText.trim()) {
+                alert('Please enter consultation text');
+                return;
+            }
+
+            // Show loading, hide results
+            loading.classList.add('active');
+            result.classList.remove('active');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/assessments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        consultationText,
+                        metadata: {
+                            patientReference: patientRef,
+                            consultationDate,
+                            consultationType
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to the result page with the assessment ID
+                    window.location.href = `/result.html?id=${data.assessment.id}`;
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to assess consultation'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to assess consultation: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(assessment) {
+            const { scoring, criteriaAssessments, overallSummary, recommendations } = assessment.assessment;
+
+            // Display score
+            document.getElementById('scoreNumber').textContent = scoring.percentage.toFixed(1) + '%';
+            
+            // Display RAG badge
+            const ragBadge = document.getElementById('ragBadge');
+            ragBadge.innerHTML = `<span class="rag-badge rag-${scoring.ragRating.rating}">${scoring.ragRating.rating}</span>`;
+
+            // Display stats
+            const stats = document.getElementById('stats');
+            stats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #4caf50;">${scoring.acceptable}</div>
+                    <div class="stat-label">Acceptable</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #ff9800;">${scoring.concern}</div>
+                    <div class="stat-label">Concern</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #f44336;">${scoring.unacceptable}</div>
+                    <div class="stat-label">Unacceptable</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${scoring.total}</div>
+                    <div class="stat-label">Total Criteria</div>
+                </div>
+            `;
+
+            // Display overall summary
+            document.getElementById('overallSummary').textContent = overallSummary;
+
+            // Display criteria assessments
+            const criteriaList = document.getElementById('criteriaList');
+            criteriaList.innerHTML = criteriaAssessments.map(c => `
+                <div class="criterion-item ${c.rating}">
+                    <div class="criterion-title">
+                        ${c.criterionId}. ${c.criterionTitle}
+                        <strong style="float: right; text-transform: uppercase;">${c.rating}</strong>
+                    </div>
+                    <div class="criterion-explanation">${c.explanation}</div>
+                </div>
+            `).join('');
+
+            // Display recommendations
+            const recommendationsList = document.getElementById('recommendationsList');
+            recommendationsList.innerHTML = recommendations.map(r => `
+                <div class="recommendation-item">${r}</div>
+            `).join('');
+
+            // Show results
+            result.classList.add('active');
+            result.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

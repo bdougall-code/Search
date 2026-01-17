@@ -1,0 +1,228 @@
+Date		Consultation Text
+17-Dec-2024 09:15		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Hypertension review (Follow-up)
+		
+History		Regular medication review
+      BP readings at home averaging 135/85
+      Compliant with medication
+      No side effects reported
+      Diet improvements noted
+      Regular exercise 3x per week
+		
+Examination		BP: 132/84 mmHg
+      Heart rate: 72 bpm regular
+      Chest clear
+      No peripheral oedema
+		
+Plan		Continue current medication
+      Repeat BP in 3 months
+      Advised to continue lifestyle modifications
+      Discussed QRISK score - stable
+		
+
+Date		Consultation Text
+17-Dec-2024 10:30		Telephone consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Upper respiratory tract infection (First)
+		
+History		3 days sore throat, runny nose
+      Low grade fever yesterday (37.8C)
+      Cough - productive, yellow sputum
+      No breathlessness
+      No chest pain
+      Non-smoker
+		
+Examination		Not examined - telephone consultation
+      Voice sounds clear
+      No respiratory distress audible
+		
+Plan		Reassurance - likely viral URTI
+      Self-care advice given
+      Adequate fluids and rest
+      Paracetamol for fever
+      Safety net - contact if worsening or not improving in 7 days
+		
+
+Date		Consultation Text
+17-Dec-2024 11:45		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Type 2 Diabetes Mellitus - annual review (Follow-up)
+		
+History		Annual diabetes review
+      Metformin 500mg BD - good compliance
+      Home glucose monitoring - fasting 6-7 mmol/L
+      Diet - trying to reduce carbs
+      Exercise - walking daily
+      No hypoglycemic episodes
+      Feet - no numbness or pain
+      Vision - unchanged
+		
+Examination		Weight: 82kg (BMI 28.5)
+      BP: 138/82
+      Feet examined - normal sensation, pulses present
+      Eyes - no obvious abnormality
+		
+Test Request		HbA1c
+      Renal function (U&E)
+      Lipid profile
+      ACR (albumin:creatinine ratio)
+		
+Plan		Continue current medication
+      Results review in 2 weeks
+      Referred to dietitian
+      Annual retinal screening due - booked
+		
+
+Date		Consultation Text
+17-Dec-2024 14:15		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Pityriasis versicolor (First)
+		
+History		Itchy scalp and discolouration in central scalp and peripheral regions
+      No red flags or skin breaks
+		
+Medication		Clotrimazole 2% cream Apply Twice A Day 40 gram
+      Ketoconazole 2% shampoo Apply two times per week for 4 weeks. Leave preparation on scalp for 3-5 mins before rinsing 240 ml
+		
+
+Date		Consultation Text
+17-Dec-2024 14:33		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		O/E - dry/cracked lips (First)
+		
+History		With parents
+      Concern about cracked lips of 2 months duration
+      No history of bowel disorders or malabsorption
+      Diet limited at present to a few veges, no balanced diet
+		
+Examination		Minor cracks, otherwise healthy oral cavity
+		
+Test Request		Coeliac Screen (tTG)
+      Ferritin
+      Serum Folate
+      B12
+      Renal Profile
+      Vitamin E
+      25 OH Vitamin D
+      Full Blood Count
+		
+Comment		Increase hydration
+      Regular vaseline use
+      Increase fruit and veg consumption
+      Blood tests for vitamin deficiency including B12
+		
+
+Date		Consultation Text
+17-Dec-2024 15:20		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Asthma review (Follow-up)
+		
+History		Routine asthma review
+      Using Salbutamol inhaler - 2-3 times per week
+      No recent exacerbations
+      No night symptoms
+      Exercise tolerance good
+      Peak flow diary reviewed - stable
+		
+Examination		Chest clear, good air entry bilaterally
+      Peak flow: 420 L/min (predicted 450)
+      Inhaler technique checked - correct
+		
+Plan		Asthma well controlled
+      Continue current treatment
+      Review in 6 months
+      Advised to use preventer regularly
+      Written asthma action plan provided
+		
+
+Date		Consultation Text
+17-Dec-2024 16:00		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Ankle sprain (First)
+		
+History		Twisted left ankle yesterday playing football
+      Immediate pain and swelling
+      Unable to weight bear initially
+      Can now walk with limp
+      RICE treatment started at home
+      No previous ankle injuries
+		
+Examination		Left ankle: moderate swelling lateral aspect
+      Tenderness over lateral ligament
+      No bony tenderness
+      Able to weight bear with pain
+      Good range of movement
+      Ottawa ankle rules - low probability fracture
+		
+Plan		Diagnosed as Grade 2 ankle sprain
+      Continue RICE protocol
+      Prescribed Ibuprofen 400mg TDS for 5 days
+      Ankle support provided
+      Physiotherapy referral if not improving in 2 weeks
+      Return if unable to weight bear
+		
+
+Date		Consultation Text
+18-Dec-2024 09:30		Telephone consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Depression - follow up (Follow-up)
+		
+History		Review 4 weeks after starting Sertraline 50mg
+      Mood improved significantly
+      Sleep pattern better
+      Able to cope with work
+      No suicidal thoughts
+      Some initial nausea - now settled
+      Engaged with counselling
+		
+Plan		Continue Sertraline 50mg
+      PHQ-9 score improved from 18 to 9
+      Review in 8 weeks
+      Continue counselling
+      Discussed long-term treatment (6-12 months minimum)
+      Safety net advice given
+		
+
+Date		Consultation Text
+18-Dec-2024 10:45		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Eczema (First)
+		
+History		Itchy rash on flexor surfaces for 3 weeks
+      Worse at night
+      No known triggers
+      Tried over-counter moisturizer - minimal effect
+      Family history of atopy
+      No wheezing or hay fever symptoms
+		
+Examination		Dry, scaly patches on antecubital and popliteal fossae
+      Some excoriation from scratching
+      No signs of infection
+      Otherwise skin normal
+		
+Medication		Emollient cream - apply liberally TDS and after washing
+      Hydrocortisone 1% cream - apply BD to affected areas for 7 days
+      Advised on trigger avoidance
+      Avoid soap - use emollient as soap substitute
+		
+Plan		Review in 2 weeks
+      Safety net - return if signs of infection
+      Patient information leaflet provided
+		
+
+Date		Consultation Text
+18-Dec-2024 11:30		Face to face consultation (City Square Medical Group)  IBE, Geoffrey (Dr)
+Problem		Contraception discussion (First)
+		
+History		Request for contraception advice
+      Currently using condoms
+      Wants more reliable method
+      Regular cycles
+      No contraindications to hormonal contraception
+      Non-smoker
+      No history of VTE
+      Discussed options: COCP, POP, implant, IUD
+		
+Examination		BP: 118/74
+      BMI: 23
+      General examination normal
+		
+Plan		Patient opted for combined oral contraceptive pill
+      Prescribed Microgynon 30 - 3 months supply
+      Explained how to take, missed pill rules
+      Discussed side effects
+      STI screening offered - accepted
+      Follow up in 3 months or sooner if problems
+		
