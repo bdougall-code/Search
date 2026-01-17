@@ -94,7 +94,7 @@ class AssessmentService {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Be supportive and constructive in your assessments. Focus on what is documented rather than what might be missing unless it poses a clear patient safety risk. Give credit for reasonable clinical documentation even if not perfect. When in doubt between ratings, choose the more favorable option.'
+            content: 'You are an expert medical auditor assessing GP consultation notes according to established clinical documentation standards. Apply rigorous professional standards and be thorough in your assessments. Documentation must clearly demonstrate safe clinical practice and comprehensive record-keeping. Missing or inadequate documentation should be highlighted even if it does not pose immediate safety risk. Only rate as "acceptable" when documentation clearly meets professional standards. When uncertain between ratings, apply the more critical assessment to encourage higher documentation standards.'
           },
           {
             role: 'user',
@@ -165,19 +165,20 @@ ${consultationText}
 """
 
 ASSESSMENT GUIDANCE:
-- Be constructive and supportive in your assessment
-- Focus on what IS documented rather than dwelling on minor omissions
-- Consider the clinical context - brief notes for routine issues are acceptable
-- Only rate as "Unacceptable" if there's a clear patient safety concern or major omission
-- When deciding between two ratings, lean towards the more favorable one
-- Give credit for reasonable clinical practice even if documentation isn't perfect
-- "Concern" should be for notable issues that don't pose immediate safety risks
-- "Acceptable" is for adequate documentation that meets professional standards
+- Apply rigorous professional documentation standards
+- Assess what IS documented but also critically evaluate gaps and omissions
+- Consider clinical context but maintain high standards for documentation quality
+- Rate as "Unacceptable" for clear patient safety concerns or major documentation failures
+- Rate as "Concern" for missing information, inadequate detail, or documentation that falls short of best practice
+- Rate as "Acceptable" only when documentation clearly meets comprehensive professional standards
+- When deciding between two ratings, apply the more critical assessment to encourage higher standards
+- Brief notes are acceptable only for truly routine matters with no complexity
+- Documentation should demonstrate clear clinical reasoning and comprehensive care
 
 Please provide your assessment in the following format:
 
 RATING: [A/C/U]
-EXPLANATION: [Detailed explanation of why you gave this rating, with specific evidence from the consultation note. Be specific and constructive.]
+EXPLANATION: [Detailed explanation of why you gave this rating, with specific evidence from the consultation note. Be thorough and identify areas for improvement.]
 
 Be specific and quote relevant parts of the consultation note where appropriate.`;
   }
