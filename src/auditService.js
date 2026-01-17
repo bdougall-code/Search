@@ -1,5 +1,6 @@
 import { assessmentService } from './assessmentService.js';
 import { calculateScore } from './assessmentCriteria.js';
+import { database } from './database.js';
 
 /**
  * Medical Audit Service
@@ -100,6 +101,9 @@ class AuditService {
     const individualAssessments = await Promise.all(assessmentPromises);
     console.log(`\n✓ All ${consultations.length} consultations assessed`);
     
+    // Save each assessment to database
+    await this.saveAssessmentsToDatabase(individualAssessments);
+    
     // Calculate summary statistics
     const summary = this.calculateReviewSummary(individualAssessments);
     
@@ -171,6 +175,9 @@ class AuditService {
     
     console.log(`\n✓ All ${consultations.length} consultations assessed`);
     
+    // Save each assessment to database
+    await this.saveAssessmentsToDatabase(individualAssessments);
+    
     // Calculate comprehensive summary statistics
     const summary = this.calculateReviewSummary(individualAssessments);
     
@@ -191,6 +198,34 @@ class AuditService {
       summary,
       detailedAnalysis
     };
+  }
+
+  /**
+   * Save assessments to database for history tracking
+   * @param {Array} individualAssessments - Array of individual consultation assessments
+   */
+  async saveAssessmentsToDatabase(individualAssessments) {
+    try {
+      const collection = database.getCollection();
+      const documentsToInsert = individualAssessments.map(item => ({
+        type: 'gp_consultation_assessment',
+        consultationText: item.assessment.consultationText,
+        metadata: item.assessment.metadata,
+        ragRating: item.assessment.scoring.ragRating.rating,
+        score: item.assessment.scoring.percentage,
+        assessment: item.assessment,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+      
+      if (documentsToInsert.length > 0) {
+        await collection.insertMany(documentsToInsert);
+        console.log(`✓ Saved ${documentsToInsert.length} assessments to database`);
+      }
+    } catch (error) {
+      console.error('Error saving assessments to database:', error);
+      // Don't throw - assessment results are still valid even if save fails
+    }
   }
 
   /**
