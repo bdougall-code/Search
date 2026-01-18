@@ -69,9 +69,10 @@ class AuditService {
   /**
    * Conduct a Rapid Review (2 consultations)
    * @param {string} consultationData - Raw consultation text with 2 consultations
+   * @param {Object} auditMetadata - Metadata for the audit (doctorInitials, referenceNumber)
    * @returns {Promise<Object>} Rapid review results
    */
-  async conductRapidReview(consultationData) {
+  async conductRapidReview(consultationData, auditMetadata = {}) {
     console.log('\n=== STARTING RAPID REVIEW (2 Consultations) ===\n');
     const startTime = Date.now();
     
@@ -92,7 +93,10 @@ class AuditService {
         {
           consultationNumber: i + 1,
           consultationDate: consultation.date,
-          reviewType: 'Rapid Review'
+          reviewType: 'Rapid Review',
+          doctorInitials: auditMetadata.doctorInitials,
+          referenceNumber: auditMetadata.referenceNumber,
+          auditDate: new Date().toISOString()
         }
       ).then(assessment => ({
         consultationNumber: i + 1,
@@ -128,9 +132,10 @@ class AuditService {
   /**
    * Conduct a Full Review (10+ consultations)
    * @param {string} consultationData - Raw consultation text with 10+ consultations
+   * @param {Object} auditMetadata - Metadata for the audit (doctorInitials, referenceNumber)
    * @returns {Promise<Object>} Full review results
    */
-  async conductFullReview(consultationData) {
+  async conductFullReview(consultationData, auditMetadata = {}) {
     console.log('\n=== STARTING FULL REVIEW (10+ Consultations) ===\n');
     const startTime = Date.now();
     
@@ -162,7 +167,10 @@ class AuditService {
           {
             consultationNumber,
             consultationDate: consultation.date,
-            reviewType: 'Full Review'
+            reviewType: 'Full Review',
+            doctorInitials: auditMetadata.doctorInitials,
+            referenceNumber: auditMetadata.referenceNumber,
+            auditDate: new Date().toISOString()
           }
         ).then(assessment => ({
           consultationNumber,

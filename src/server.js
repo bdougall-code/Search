@@ -140,6 +140,82 @@ app.get('/api/assessments', async (req, res) => {
   }
 });
 
+// NEW: Get assessments grouped by audit reference
+app.get('/api/assessments/by-audit', async (req, res) => {
+  try {
+    console.log('Getting assessments grouped by audit reference...');
+    const collection = database.getCollection();
+    
+    // Get all assessments with audit metadata
+    const assessments = await collection
+      .find({ 
+        type: 'gp_consultation_assessment',
+        'metadata.referenceNumber': { $exists: true }
+      })
+      .sort({ 'metadata.auditDate': -1 })
+      .project({ embedding: 0 })
+      .toArray();
+    
+    // Group by reference number
+    const groupedAudits = {};
+    
+    assessments.forEach(assessment => {
+      const refNum = assessment.metadata.referenceNumber;
+      
+      if (!groupedAudits[refNum]) {
+        groupedAudits[refNum] = {
+          referenceNumber: refNum,
+          doctorInitials: assessment.metadata.doctorInitials,
+          reviewType: assessment.metadata.reviewType,
+          auditDate: assessment.metadata.auditDate,
+          consultations: [],
+          overallScore: 0,
+          overallRAG: ''
+        };
+      }
+      
+      groupedAudits[refNum].consultations.push({
+        id: assessment._id,
+        consultationNumber: assessment.metadata.consultationNumber,
+        consultationDate: assessment.metadata.consultationDate,
+        score: assessment.score,
+        ragRating: assessment.ragRating,
+        createdAt: assessment.createdAt
+      });
+    });
+    
+    // Calculate overall scores and RAG for each audit
+    Object.keys(groupedAudits).forEach(refNum => {
+      const audit = groupedAudits[refNum];
+      const totalScore = audit.consultations.reduce((sum, c) => sum + c.score, 0);
+      audit.overallScore = Math.round((totalScore / audit.consultations.length) * 100) / 100;
+      
+      // Determine overall RAG based on average score
+      if (audit.overallScore >= 90) audit.overallRAG = 'GREEN';
+      else if (audit.overallScore >= 70) audit.overallRAG = 'YELLOW';
+      else if (audit.overallScore >= 50) audit.overallRAG = 'AMBER';
+      else audit.overallRAG = 'RED';
+      
+      // Sort consultations by number
+      audit.consultations.sort((a, b) => a.consultationNumber - b.consultationNumber);
+    });
+    
+    // Convert to array and sort by audit date
+    const auditsList = Object.values(groupedAudits).sort((a, b) => 
+      new Date(b.auditDate) - new Date(a.auditDate)
+    );
+    
+    res.json({
+      success: true,
+      count: auditsList.length,
+      audits: auditsList
+    });
+  } catch (error) {
+    console.error('Get audits error:', error);
+    res.status(500).json({ error: 'Failed to get audits', details: error.message });
+  }
+});
+
 // NEW: Get assessment statistics (MUST come before /:id route)
 app.get('/api/assessments/stats', async (req, res) => {
   try {
@@ -215,7 +291,7 @@ app.post('/api/audit/rapid-review', async (req, res) => {
     }
 
     console.log(`Starting Rapid Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
-    const results = await auditService.conductRapidReview(consultationData);
+    const results = await auditService.conductRapidReview(consultationData, { doctorInitials, referenceNumber });
     
     // Add doctor initials and reference number to results
     if (doctorInitials) {
@@ -255,7 +331,7 @@ app.post('/api/audit/full-review', async (req, res) => {
     }
 
     console.log(`Starting Full Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
-    const results = await auditService.conductFullReview(consultationData);
+    const results = await auditService.conductFullReview(consultationData, { doctorInitials, referenceNumber });
     
     // Add doctor initials and reference number to results
     if (doctorInitials) {

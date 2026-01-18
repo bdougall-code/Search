@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Summary - GP Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 0;
+            color: #2c3e50;
+        }
+
+        .nav-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1.2rem 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            margin-bottom: 2rem;
+        }
+
+        .nav-header nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .nav-header .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .nav-header a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .nav-header a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .nav-header a.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px 20px;
+        }
+
+        h1 {
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .audit-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .audit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .audit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .audit-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .audit-ref {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .audit-doctor {
+            font-size: 1.1em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .audit-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .copy-link-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-link-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .copy-link-btn.copied {
+            background: #4caf50;
+        }
+
+        .overall-result {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .overall-result-header {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .overall-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .rag-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .rag-GREEN {
+            background: #4caf50;
+            color: white;
+        }
+
+        .rag-YELLOW {
+            background: #ffeb3b;
+            color: #333;
+        }
+
+        .rag-AMBER {
+            background: #ff9800;
+            color: white;
+        }
+
+        .rag-RED {
+            background: #f44336;
+            color: white;
+        }
+
+        .consultations-list {
+            margin-top: 15px;
+        }
+
+        .consultation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .consultation-item:hover {
+            background: #e9ecef;
+        }
+
+        .consultation-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .consultation-number {
+            font-weight: 600;
+            color: #1e3c72;
+            min-width: 120px;
+        }
+
+        .consultation-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .consultation-score {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .score-value {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #667eea;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .empty-state a:hover {
+            transform: translateY(-2px);
+        }
+
+        .audit-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .audit-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .audit-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .overall-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .consultation-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .consultation-score {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <nav>
+            <a href="/" class="logo">🏥 GP Assessment</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/audit.html">Audit System</a>
+                <a href="/audit-summary.html" class="active">Audit Summary</a>
+                <a href="/search.html">Search</a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container">
+        <h1>📊 Audit Summary</h1>
+        <p class="subtitle">View all completed audits grouped by reference number</p>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading audits...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div id="auditsContainer"></div>
+        </div>
+
+        <div id="emptyState" class="card empty-state" style="display: none;">
+            <h2>No Audits Found</h2>
+            <p>You haven't conducted any audits yet. Start by conducting your first audit to see results here.</p>
+            <a href="/audit.html">Conduct First Audit</a>
+        </div>
+    </div>
+
+    <script>
+        let auditsData = [];
+
+        async function loadAudits() {
+            try {
+                const response = await fetch('/api/assessments/by-audit');
+                const data = await response.json();
+
+                if (data.success) {
+                    auditsData = data.audits;
+                    displayAudits(auditsData);
+                } else {
+                    throw new Error(data.error || 'Failed to load audits');
+                }
+            } catch (error) {
+                console.error('Error loading audits:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+
+        function displayAudits(audits) {
+            document.getElementById('loading').style.display = 'none';
+
+            if (audits.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('content').style.display = 'block';
+            const container = document.getElementById('auditsContainer');
+
+            container.innerHTML = audits.map(audit => `
+                <div class="audit-card">
+                    <div class="audit-header">
+                        <div class="audit-title">
+                            <div>
+                                <div class="audit-ref">📋 ${audit.referenceNumber}</div>
+                                <div class="audit-doctor">Dr. ${audit.doctorInitials || 'Unknown'}</div>
+                                <div class="audit-meta">
+                                    <div class="audit-meta-item">
+                                        📅 ${new Date(audit.auditDate).toLocaleDateString()}
+                                    </div>
+                                    <div class="audit-meta-item">
+                                        📝 ${audit.reviewType}
+                                    </div>
+                                    <div class="audit-meta-item">
+                                        📊 ${audit.consultations.length} consultation${audit.consultations.length > 1 ? 's' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="audit-actions">
+                            <button class="copy-link-btn" onclick="copyAuditLink('${audit.referenceNumber}')">
+                                <span>🔗</span>
+                                <span id="copy-text-${audit.referenceNumber.replace(/[^a-zA-Z0-9]/g, '')}">Copy Link</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overall-result">
+                        <div class="overall-result-header">Overall Audit Result</div>
+                        <div class="overall-stats">
+                            <div class="stat-box">
+                                <div class="stat-value">${audit.overallScore}%</div>
+                                <div class="stat-label">Average Score</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">
+                                    <span class="rag-badge rag-${audit.overallRAG}">${audit.overallRAG}</span>
+                                </div>
+                                <div class="stat-label">Overall Rating</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">${audit.consultations.length}</div>
+                                <div class="stat-label">Total Notes</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value">${calculatePassRate(audit.consultations)}%</div>
+                                <div class="stat-label">Pass Rate (≥70%)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="consultations-list">
+                        <h3 style="margin-bottom: 15px; color: #1e3c72;">Individual Consultations</h3>
+                        ${audit.consultations.map(consultation => `
+                            <div class="consultation-item">
+                                <div class="consultation-info">
+                                    <div class="consultation-number">Note ${consultation.consultationNumber}</div>
+                                    <div class="consultation-date">${consultation.consultationDate}</div>
+                                </div>
+                                <div class="consultation-score">
+                                    <div class="score-value">${consultation.score.toFixed(1)}%</div>
+                                    <span class="rag-badge rag-${consultation.ragRating}">${consultation.ragRating}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function calculatePassRate(consultations) {
+            const passed = consultations.filter(c => c.score >= 70).length;
+            return Math.round((passed / consultations.length) * 100);
+        }
+
+        function copyAuditLink(referenceNumber) {
+            const url = `${window.location.origin}/audit-summary.html?ref=${encodeURIComponent(referenceNumber)}`;
+            
+            navigator.clipboard.writeText(url).then(() => {
+                // Update button to show success
+                const sanitizedRef = referenceNumber.replace(/[^a-zA-Z0-9]/g, '');
+                const btnText = document.getElementById(`copy-text-${sanitizedRef}`);
+                const btn = btnText.parentElement;
+                
+                btnText.textContent = 'Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btnText.textContent = 'Copy Link';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                alert('Failed to copy link to clipboard');
+            });
+        }
+
+        // Check if a specific reference is in the URL and scroll to it
+        function checkForReferenceInURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            
+            if (ref) {
+                // Wait a bit for the page to render
+                setTimeout(() => {
+                    const audit = auditsData.find(a => a.referenceNumber === ref);
+                    if (audit) {
+                        // Find and highlight the audit card
+                        const cards = document.querySelectorAll('.audit-card');
+                        cards.forEach(card => {
+                            if (card.textContent.includes(ref)) {
+                                card.style.border = '3px solid #667eea';
+                                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        });
+                    }
+                }, 500);
+            }
+        }
+
+        // Load audits on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadAudits();
+            checkForReferenceInURL();
+        });
+    </script>
+</body>
+</html>
