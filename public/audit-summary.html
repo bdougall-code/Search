@@ -136,6 +136,101 @@
             box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
         }
 
+        .audit-card-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .audit-card-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .audit-card-content.expanded {
+            display: block;
+        }
+
+        .expand-icon {
+            transition: transform 0.3s;
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .expand-icon.rotated {
+            transform: rotate(90deg);
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #b3d9ff;
+        }
+
+        .summary-section h4 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .strengths-section {
+            background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .strengths-section h5 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .improvements-section {
+            background: linear-gradient(135deg, #fff8f1 0%, #ffe9d5 100%);
+            border: 1px solid #ffcc80;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .improvements-section h5 {
+            color: #e65100;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .summary-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item strong {
+            color: #1e3c72;
+        }
+
+        .recommendation-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
         .audit-header {
             display: flex;
             justify-content: space-between;
@@ -654,90 +749,217 @@
             document.getElementById('content').style.display = 'block';
             const container = document.getElementById('auditsContainer');
 
-            container.innerHTML = audits.map(audit => `
+            container.innerHTML = audits.map(audit => {
+                const summary = generateAuditSummary(audit);
+                
+                return `
                 <div class="audit-card">
-                    <div class="audit-header">
-                        <div class="audit-title">
-                            <div>
-                                <div class="audit-ref">${audit.referenceNumber}</div>
-                                <div class="audit-doctor">Dr. ${audit.doctorInitials || 'Unknown'}</div>
-                                <div class="audit-meta">
-                                    <div class="audit-meta-item">
-                                        📅 ${new Date(audit.auditDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </div>
-                                    <div class="audit-meta-item">
-                                        📝 ${audit.reviewType}
-                                    </div>
-                                    <div class="audit-meta-item">
-                                        📊 ${audit.consultations.length} consultation${audit.consultations.length > 1 ? 's' : ''}
+                    <div class="audit-card-header" onclick="toggleAuditCard(event)">
+                        <div class="audit-header">
+                            <div class="audit-title">
+                                <div>
+                                    <div class="audit-ref">${audit.referenceNumber}</div>
+                                    <div class="audit-doctor">Dr. ${audit.doctorInitials || 'Unknown'}</div>
+                                    <div class="audit-meta">
+                                        <div class="audit-meta-item">
+                                            📅 ${new Date(audit.auditDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </div>
+                                        <div class="audit-meta-item">
+                                            📝 ${audit.reviewType}
+                                        </div>
+                                        <div class="audit-meta-item">
+                                            📊 ${audit.consultations.length} consultation${audit.consultations.length > 1 ? 's' : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.8em; font-weight: bold; color: #667eea;">${audit.overallScore}%</div>
+                                    <span class="rag-badge rag-${audit.overallRAG}">${audit.overallRAG}</span>
+                                </div>
+                                <span class="expand-icon">▶</span>
+                            </div>
                         </div>
-                        <div class="audit-actions">
-                            <button class="download-pdf-btn" onclick="downloadAuditPDF('${audit.referenceNumber}')">
+                    </div>
+
+                    <div class="audit-card-content">
+                        <div class="audit-actions" style="margin-bottom: 20px;">
+                            <button class="download-pdf-btn" onclick="event.stopPropagation(); downloadAuditPDF('${audit.referenceNumber}')">
                                 <span>📄</span>
                                 <span>Download PDF</span>
                             </button>
-                            <button class="copy-link-btn" onclick="copyAuditLink('${audit.referenceNumber}')">
+                            <button class="copy-link-btn" onclick="event.stopPropagation(); copyAuditLink('${audit.referenceNumber}')">
                                 <span>🔗</span>
                                 <span id="copy-text-${audit.referenceNumber.replace(/[^a-zA-Z0-9]/g, '')}">Copy Link</span>
                             </button>
                         </div>
-                    </div>
 
-                    <div class="overall-result">
-                        <div class="overall-result-header">Overall Audit Result</div>
-                        <div class="overall-stats">
-                            <div class="stat-box">
-                                <div class="stat-value">${audit.overallScore}%</div>
-                                <div class="stat-label">Average Score</div>
+                        <div class="summary-section">
+                            <h4>📊 Performance Summary</h4>
+                            
+                            <div class="strengths-section">
+                                <h5>✅ Strengths</h5>
+                                ${summary.strengths.length > 0 ? summary.strengths.map(s => `
+                                    <div class="summary-item">${s}</div>
+                                `).join('') : '<div class="summary-item">No consistent strengths identified across all consultations.</div>'}
                             </div>
-                            <div class="stat-box">
-                                <div class="stat-value">
-                                    <span class="rag-badge rag-${audit.overallRAG}">${audit.overallRAG}</span>
-                                </div>
-                                <div class="stat-label">Overall Rating</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-value">${audit.consultations.length}</div>
-                                <div class="stat-label">Total Notes</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-value">${calculatePassRate(audit.consultations)}%</div>
-                                <div class="stat-label">Pass Rate (≥70%)</div>
+
+                            <div class="improvements-section">
+                                <h5>⚠️ Areas for Improvement</h5>
+                                ${summary.improvements.length > 0 ? summary.improvements.map(imp => `
+                                    <div class="summary-item">
+                                        <strong>${imp.area}</strong><br>
+                                        <span class="recommendation-badge">Recommendation</span>${imp.recommendation}
+                                    </div>
+                                `).join('') : '<div class="summary-item">No significant areas for improvement identified.</div>'}
                             </div>
                         </div>
-                    </div>
 
-                    <div class="consultations-list">
-                        <h3>Individual Consultations</h3>
-                        ${audit.consultations.map((consultation, idx) => `
-                            <div>
-                                <div class="consultation-item" onclick="toggleConsultationDetails('${audit.referenceNumber}', ${idx})">
-                                    <div class="consultation-info">
-                                        <div class="consultation-number">Note ${consultation.consultationNumber}</div>
-                                        <div class="consultation-date">${consultation.consultationDate}</div>
-                                    </div>
-                                    <div class="consultation-score">
-                                        <div class="score-value">${consultation.score.toFixed(1)}%</div>
-                                        <span class="rag-badge rag-${consultation.ragRating}">${consultation.ragRating}</span>
-                                        <span class="arrow-icon" id="arrow-${audit.referenceNumber}-${idx}">▶</span>
-                                    </div>
+                        <div class="overall-result">
+                            <div class="overall-result-header">Overall Audit Result</div>
+                            <div class="overall-stats">
+                                <div class="stat-box">
+                                    <div class="stat-value">${audit.overallScore}%</div>
+                                    <div class="stat-label">Average Score</div>
                                 </div>
-                                <div class="consultation-details" id="details-${audit.referenceNumber}-${idx}">
-                                    <div class="loading">Loading details...</div>
+                                <div class="stat-box">
+                                    <div class="stat-value">
+                                        <span class="rag-badge rag-${audit.overallRAG}">${audit.overallRAG}</span>
+                                    </div>
+                                    <div class="stat-label">Overall Rating</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value">${audit.consultations.length}</div>
+                                    <div class="stat-label">Total Notes</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value">${calculatePassRate(audit.consultations)}%</div>
+                                    <div class="stat-label">Pass Rate (≥70%)</div>
                                 </div>
                             </div>
-                        `).join('')}
+                        </div>
+
+                        <div class="consultations-list">
+                            <h3>Individual Consultations</h3>
+                            ${audit.consultations.map((consultation, idx) => `
+                                <div>
+                                    <div class="consultation-item" onclick="toggleConsultationDetails('${audit.referenceNumber}', ${idx})">
+                                        <div class="consultation-info">
+                                            <div class="consultation-number">Note ${consultation.consultationNumber}</div>
+                                            <div class="consultation-date">${consultation.consultationDate}</div>
+                                        </div>
+                                        <div class="consultation-score">
+                                            <div class="score-value">${consultation.score.toFixed(1)}%</div>
+                                            <span class="rag-badge rag-${consultation.ragRating}">${consultation.ragRating}</span>
+                                            <span class="arrow-icon" id="arrow-${audit.referenceNumber}-${idx}">▶</span>
+                                        </div>
+                                    </div>
+                                    <div class="consultation-details" id="details-${audit.referenceNumber}-${idx}">
+                                        <div class="loading">Loading details...</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function calculatePassRate(consultations) {
             const passed = consultations.filter(c => c.score >= 70).length;
             return Math.round((passed / consultations.length) * 100);
+        }
+
+        function toggleAuditCard(event) {
+            const header = event.currentTarget;
+            const card = header.closest('.audit-card');
+            const content = card.querySelector('.audit-card-content');
+            const icon = card.querySelector('.expand-icon');
+            
+            content.classList.toggle('expanded');
+            icon.classList.toggle('rotated');
+        }
+
+        function generateAuditSummary(audit) {
+            const strengths = [];
+            const improvements = [];
+            
+            // Calculate criteria performance across all consultations
+            const criteriaPerformance = {};
+            
+            // We need to fetch all consultation details to analyze criteria
+            // For now, we'll generate based on overall scores
+            const avgScore = audit.overallScore;
+            const passRate = calculatePassRate(audit.consultations);
+            
+            // Identify strengths
+            if (avgScore >= 90) {
+                strengths.push('Excellent overall performance with consistently high scores across all consultations.');
+            } else if (avgScore >= 80) {
+                strengths.push('Strong overall performance demonstrating good clinical practice.');
+            } else if (avgScore >= 70) {
+                strengths.push('Satisfactory performance meeting acceptable standards.');
+            }
+            
+            if (passRate === 100) {
+                strengths.push('All consultations achieved passing scores (≥70%), showing consistent quality.');
+            } else if (passRate >= 80) {
+                strengths.push(`${passRate}% of consultations achieved passing scores, demonstrating good overall consistency.`);
+            }
+            
+            const greenCount = audit.consultations.filter(c => c.ragRating === 'GREEN').length;
+            if (greenCount > 0) {
+                strengths.push(`${greenCount} consultation${greenCount > 1 ? 's' : ''} achieved GREEN rating, indicating excellent documentation quality.`);
+            }
+            
+            // Identify areas for improvement
+            if (avgScore < 70) {
+                improvements.push({
+                    area: 'Overall Performance Below Standard',
+                    recommendation: 'Review all 12 assessment criteria and focus on improving documentation completeness and clinical reasoning clarity.'
+                });
+            } else if (avgScore < 80) {
+                improvements.push({
+                    area: 'Performance Can Be Enhanced',
+                    recommendation: 'Focus on consistently meeting all criteria across consultations, particularly those marked as "concern" or "unacceptable".'
+                });
+            }
+            
+            if (passRate < 100) {
+                const failedCount = audit.consultations.length - Math.round(passRate * audit.consultations.length / 100);
+                improvements.push({
+                    area: `${failedCount} Consultation${failedCount > 1 ? 's' : ''} Below Passing Threshold`,
+                    recommendation: 'Review these consultations in detail to identify specific criteria that need improvement and implement targeted training.'
+                });
+            }
+            
+            const redCount = audit.consultations.filter(c => c.ragRating === 'RED').length;
+            if (redCount > 0) {
+                improvements.push({
+                    area: `${redCount} Consultation${redCount > 1 ? 's' : ''} Rated RED`,
+                    recommendation: 'Urgent review required. Focus on safety-critical areas: safety netting, red flags, examination findings, and follow-up plans.'
+                });
+            }
+            
+            const amberCount = audit.consultations.filter(c => c.ragRating === 'AMBER').length;
+            if (amberCount > 0) {
+                improvements.push({
+                    area: `${amberCount} Consultation${amberCount > 1 ? 's' : ''} Rated AMBER`,
+                    recommendation: 'Address concerns identified in criteria assessments, particularly around documentation quality and clinical decision-making.'
+                });
+            }
+            
+            // General recommendations based on score ranges
+            if (avgScore < 90 && improvements.length === 0) {
+                improvements.push({
+                    area: 'Consistency and Excellence',
+                    recommendation: 'Aim for consistent excellence across all criteria. Review high-scoring consultations to identify best practices that can be applied throughout.'
+                });
+            }
+            
+            return { strengths, improvements };
         }
 
         function copyAuditLink(referenceNumber) {
