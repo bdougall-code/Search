@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Summary - GP Assessment</title>
+    <title>Assessment History - GP Assessment</title>
     <style>
         * {
             margin: 0;
@@ -340,6 +340,124 @@
             transform: translateY(-2px);
         }
 
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            background: #f5f7fa;
+            color: #666;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            background: #e8ebf0;
+            color: #1e3c72;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .assessment-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .assessment-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .assessment-item.GREEN {
+            border-left-color: #4caf50;
+        }
+
+        .assessment-item.YELLOW {
+            border-left-color: #ffeb3b;
+        }
+
+        .assessment-item.AMBER {
+            border-left-color: #ff9800;
+        }
+
+        .assessment-item.RED {
+            border-left-color: #f44336;
+        }
+
+        .assessment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .assessment-patient {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 1.1em;
+        }
+
+        .assessment-score {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 5px;
+        }
+
+        .assessment-rag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .assessment-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .no-assessments {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-assessments h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
         .audit-meta {
             display: flex;
             gap: 20px;
@@ -385,34 +503,94 @@
             <div class="nav-links">
                 <a href="/">Home</a>
                 <a href="/audit.html">Audit System</a>
-                <a href="/audit-summary.html" class="active">Audit Summary</a>
-                <a href="/search.html">Search</a>
+                <a href="/audit-summary.html" class="active">Assessment History</a>
             </div>
         </nav>
     </div>
 
     <div class="container">
-        <h1>📊 Audit Summary</h1>
-        <p class="subtitle">View all completed audits grouped by reference number</p>
+        <h1>📊 Assessment Summary</h1>
+        <p class="subtitle">View audit summaries and individual assessment history</p>
 
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Loading audits...</p>
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('audits')">Audit Summaries</button>
+            <button class="tab-button" onclick="switchTab('assessments')">Individual Assessments</button>
         </div>
 
-        <div id="content" style="display: none;">
-            <div id="auditsContainer"></div>
+        <!-- Audits Tab -->
+        <div id="auditsTab" class="tab-content active">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading audits...</p>
+            </div>
+
+            <div id="content" style="display: none;">
+                <div id="auditsContainer"></div>
+            </div>
+
+            <div id="emptyState" class="card empty-state" style="display: none;">
+                <h2>No Audits Found</h2>
+                <p>You haven't conducted any audits yet. Start by conducting your first audit to see results here.</p>
+                <a href="/audit.html">Conduct First Audit</a>
+            </div>
         </div>
 
-        <div id="emptyState" class="card empty-state" style="display: none;">
-            <h2>No Audits Found</h2>
-            <p>You haven't conducted any audits yet. Start by conducting your first audit to see results here.</p>
-            <a href="/audit.html">Conduct First Audit</a>
+        <!-- Assessments Tab -->
+        <div id="assessmentsTab" class="tab-content">
+            <!-- Statistics Card -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Statistics</h2>
+                <div id="statsLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading statistics...</p>
+                </div>
+                <div id="statsContent" style="display: none;">
+                    <div class="overall-stats" id="statsGrid"></div>
+                </div>
+            </div>
+
+            <!-- Assessments List -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">All Individual Assessments</h2>
+                <div id="assessmentsLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading assessments...</p>
+                </div>
+                <div id="assessmentList"></div>
+            </div>
         </div>
     </div>
 
     <script>
         let auditsData = [];
+        let currentTab = 'audits';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tab === 'audits') {
+                document.getElementById('auditsTab').classList.add('active');
+            } else if (tab === 'assessments') {
+                document.getElementById('assessmentsTab').classList.add('active');
+                // Load assessments if not already loaded
+                if (document.getElementById('assessmentList').children.length === 0) {
+                    loadStats();
+                    loadAssessments();
+                }
+            }
+        }
 
         async function loadAudits() {
             try {
@@ -540,7 +718,116 @@
                 alert('Failed to copy link to clipboard');
             });
         }
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/assessments/stats');
+                const data = await response.json();
 
+                if (data.success) {
+                    displayStats(data.stats);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function displayStats(stats) {
+            document.getElementById('statsLoading').style.display = 'none';
+            document.getElementById('statsContent').style.display = 'block';
+
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">Total Assessments</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #4caf50;">${stats.byRAG.GREEN}</div>
+                    <div class="stat-label">Green</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #ffeb3b;">${stats.byRAG.YELLOW}</div>
+                    <div class="stat-label">Yellow</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #ff9800;">${stats.byRAG.AMBER}</div>
+                    <div class="stat-label">Amber</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #f44336;">${stats.byRAG.RED}</div>
+                    <div class="stat-label">Red</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats.averageScore.toFixed(1)}%</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+            `;
+        }
+
+        // Load assessments
+        async function loadAssessments() {
+            try {
+                const response = await fetch('/api/assessments?limit=100');
+                const data = await response.json();
+
+                if (data.success) {
+                    displayAssessments(data.assessments);
+                }
+            } catch (error) {
+                console.error('Error loading assessments:', error);
+                document.getElementById('assessmentsLoading').innerHTML = 
+                    '<div class="no-assessments">❌ Error loading assessments</div>';
+            }
+        }
+
+        function displayAssessments(assessments) {
+            document.getElementById('assessmentsLoading').style.display = 'none';
+            const listDiv = document.getElementById('assessmentList');
+
+            if (!assessments || assessments.length === 0) {
+                listDiv.innerHTML = `
+                    <div class="no-assessments">
+                        <h3>No assessments yet</h3>
+                        <p>Start by creating your first assessment</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listDiv.innerHTML = assessments.map(a => {
+                const date = new Date(a.createdAt).toLocaleDateString();
+                const time = new Date(a.createdAt).toLocaleTimeString();
+                const patientRef = a.metadata?.patientReference || 'N/A';
+                const consultationType = a.metadata?.consultationType || 'N/A';
+
+                return `
+                    <div class="assessment-item ${a.ragRating}" onclick="viewAssessment('${a.id}')">
+                        <div class="assessment-header">
+                            <div>
+                                <div class="assessment-patient">Patient: ${escapeHtml(patientRef)}</div>
+                                <div class="assessment-score">${a.score?.toFixed(1)}%</div>
+                            </div>
+                            <span class="assessment-rag rag-${a.ragRating}">${a.ragRating}</span>
+                        </div>
+                        <div class="assessment-meta">
+                            <span>📅 ${date} ${time}</span>
+                            <span>📋 ${escapeHtml(consultationType)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewAssessment(id) {
+            window.location.href = `/result.html?id=${id}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         // Check if a specific reference is in the URL and scroll to it
         function checkForReferenceInURL() {
             const urlParams = new URLSearchParams(window.location.search);
