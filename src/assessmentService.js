@@ -116,7 +116,7 @@ class AssessmentService {
           }
         ],
         temperature: 0.4, // Slightly higher for more nuanced assessments
-        max_tokens: 500
+        max_tokens: 300 // Reduced from 500 for faster responses
       });
       
       const aiResponse = response.choices[0].message.content;

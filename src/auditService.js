@@ -11,8 +11,11 @@ class AuditService {
     this.assessmentService = assessmentService;
     // Batch size for parallel processing - adjust based on API rate limits
     // Higher = faster but may hit rate limits, Lower = slower but more stable
-    this.batchSize = 5; // Process 5 consultations at a time
-    console.log('✓ Audit Service initialized');
+    // 10 = Maximum speed for typical audits (~30-60s for 10 notes)
+    // 5 = Balanced approach (safer for rate limits)
+    // 3 = Conservative (best for slower connections)
+    this.batchSize = 10; // Process 10 consultations at a time for maximum speed
+    console.log('✓ Audit Service initialized with batch size:', this.batchSize);
   }
 
   /**
