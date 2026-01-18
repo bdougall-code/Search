@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assessment History - GP Assessment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -199,6 +200,32 @@
 
         .copy-link-btn.copied {
             background: #4caf50;
+        }
+
+        .download-pdf-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-pdf-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .download-pdf-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .overall-result {
@@ -648,6 +675,10 @@
                             </div>
                         </div>
                         <div class="audit-actions">
+                            <button class="download-pdf-btn" onclick="downloadAuditPDF('${audit.referenceNumber}')">
+                                <span>📄</span>
+                                <span>Download PDF</span>
+                            </button>
                             <button class="copy-link-btn" onclick="copyAuditLink('${audit.referenceNumber}')">
                                 <span>🔗</span>
                                 <span id="copy-text-${audit.referenceNumber.replace(/[^a-zA-Z0-9]/g, '')}">Copy Link</span>
@@ -729,6 +760,187 @@
                 console.error('Failed to copy link:', err);
                 alert('Failed to copy link to clipboard');
             });
+        }
+
+        // Download audit as PDF
+        async function downloadAuditPDF(referenceNumber) {
+            const audit = auditsData.find(a => a.referenceNumber === referenceNumber);
+            if (!audit) return;
+
+            // Show loading state
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>Generating PDF...</span>';
+
+            try {
+                // Load all consultation details
+                const consultationDetails = await Promise.all(
+                    audit.consultations.map(async (consultation) => {
+                        const response = await fetch(`/api/assessments/${consultation.id}`);
+                        const data = await response.json();
+                        return data.success ? data.assessment : null;
+                    })
+                );
+
+                // Generate PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                let yPos = 20;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 20;
+                const maxWidth = 170;
+
+                // Helper function to add new page if needed
+                function checkPageBreak(requiredSpace) {
+                    if (yPos + requiredSpace > pageHeight - margin) {
+                        doc.addPage();
+                        yPos = 20;
+                        return true;
+                    }
+                    return false;
+                }
+
+                // Title
+                doc.setFontSize(20);
+                doc.setFont(undefined, 'bold');
+                doc.text('GP Consultation Audit Report', margin, yPos);
+                yPos += 10;
+
+                // Audit Info
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Reference: ${audit.referenceNumber}`, margin, yPos);
+                yPos += 7;
+                doc.text(`Doctor: Dr. ${audit.doctorInitials || 'Unknown'}`, margin, yPos);
+                yPos += 7;
+                doc.text(`Review Type: ${audit.reviewType}`, margin, yPos);
+                yPos += 7;
+                doc.text(`Date: ${new Date(audit.auditDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, margin, yPos);
+                yPos += 7;
+                doc.text(`Total Consultations: ${audit.consultations.length}`, margin, yPos);
+                yPos += 12;
+
+                // Overall Results
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Overall Audit Results', margin, yPos);
+                yPos += 8;
+
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Average Score: ${audit.overallScore}%`, margin, yPos);
+                yPos += 6;
+                doc.text(`Overall Rating: ${audit.overallRAG}`, margin, yPos);
+                yPos += 6;
+                doc.text(`Pass Rate (>=70%): ${calculatePassRate(audit.consultations)}%`, margin, yPos);
+                yPos += 6;
+                doc.text(`Total Notes: ${audit.consultations.length}`, margin, yPos);
+                yPos += 15;
+
+                // Individual Consultations
+                for (let i = 0; i < audit.consultations.length; i++) {
+                    const consultation = audit.consultations[i];
+                    const details = consultationDetails[i];
+
+                    if (!details) continue;
+
+                    checkPageBreak(30);
+
+                    // Consultation header
+                    doc.setFillColor(102, 126, 234);
+                    doc.rect(margin, yPos - 5, maxWidth, 10, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Consultation ${consultation.consultationNumber} - ${consultation.consultationDate}`, margin + 2, yPos + 2);
+                    yPos += 12;
+
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Score: ${consultation.score.toFixed(1)}% | Rating: ${consultation.ragRating}`, margin, yPos);
+                    yPos += 8;
+
+                    // Overall Summary
+                    checkPageBreak(20);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Overall Summary:', margin, yPos);
+                    yPos += 6;
+                    doc.setFont(undefined, 'normal');
+                    const summaryLines = doc.splitTextToSize(details.assessment.overallSummary, maxWidth);
+                    summaryLines.forEach(line => {
+                        checkPageBreak(6);
+                        doc.text(line, margin, yPos);
+                        yPos += 5;
+                    });
+                    yPos += 5;
+
+                    // Score Breakdown
+                    checkPageBreak(15);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Score Breakdown:', margin, yPos);
+                    yPos += 6;
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Acceptable: ${details.assessment.scoring.acceptable} | Concern: ${details.assessment.scoring.concern} | Unacceptable: ${details.assessment.scoring.unacceptable}`, margin, yPos);
+                    yPos += 8;
+
+                    // Criteria Assessments
+                    checkPageBreak(15);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Assessment Criteria:', margin, yPos);
+                    yPos += 8;
+
+                    details.assessment.criteriaAssessments.forEach((criteria, idx) => {
+                        checkPageBreak(25);
+
+                        // Criterion title and rating
+                        doc.setFont(undefined, 'bold');
+                        doc.setFontSize(10);
+                        doc.text(`${idx + 1}. ${criteria.criterionTitle}`, margin, yPos);
+                        yPos += 5;
+
+                        // Rating badge
+                        doc.setFont(undefined, 'bold');
+                        if (criteria.rating === 'acceptable') {
+                            doc.setTextColor(76, 175, 80);
+                        } else if (criteria.rating === 'concern') {
+                            doc.setTextColor(255, 152, 0);
+                        } else {
+                            doc.setTextColor(244, 67, 54);
+                        }
+                        doc.text(criteria.rating.toUpperCase(), margin, yPos);
+                        yPos += 5;
+
+                        // Explanation
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFont(undefined, 'normal');
+                        doc.setFontSize(9);
+                        const explanationLines = doc.splitTextToSize(criteria.explanation, maxWidth);
+                        explanationLines.forEach(line => {
+                            checkPageBreak(5);
+                            doc.text(line, margin, yPos);
+                            yPos += 4;
+                        });
+                        yPos += 5;
+                    });
+
+                    yPos += 10;
+                }
+
+                // Save PDF
+                doc.save(`Audit-${audit.referenceNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+                // Reset button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate PDF. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         // Toggle consultation details
