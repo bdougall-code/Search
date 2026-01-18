@@ -86,6 +86,36 @@ class AssessmentService {
       }
     }
     
+    // Special handling for criterion 5 - examination
+    // Mark as not-relevant for telephone consultations
+    if (criterion.id === 5) {
+      const isTelephone = this.isTelephoneConsultation(consultationText);
+      if (isTelephone) {
+        return {
+          criterionId: criterion.id,
+          criterionTitle: criterion.title,
+          rating: 'not-relevant',
+          explanation: 'This is a telephone consultation where physical examination is not possible. This criterion is not relevant and is excluded from scoring.',
+          evidence: this.extractEvidence(consultationText, criterion)
+        };
+      }
+    }
+    
+    // Special handling for criterion 7, 8, 9 - prescribing-related criteria
+    // Mark as not-relevant if nothing was prescribed
+    if ([7, 8, 9].includes(criterion.id)) {
+      const hasPrescription = this.hasPrescribing(consultationText);
+      if (!hasPrescription) {
+        return {
+          criterionId: criterion.id,
+          criterionTitle: criterion.title,
+          rating: 'not-relevant',
+          explanation: 'No prescription was issued during this consultation. This prescribing criterion is not relevant and is excluded from scoring.',
+          evidence: this.extractEvidence(consultationText, criterion)
+        };
+      }
+    }
+    
     // Special handling for criterion 12 - check if there are any test results mentioned
     if (criterion.id === 12) {
       const hasTestResults = this.checkForTestResults(consultationText);
@@ -93,8 +123,8 @@ class AssessmentService {
         return {
           criterionId: criterion.id,
           criterionTitle: criterion.title,
-          rating: 'acceptable',
-          explanation: 'No radiology or pathology results were present in this consultation that required action. This criterion is rated as acceptable when no test results are applicable.',
+          rating: 'not-relevant',
+          explanation: 'No radiology or pathology results were present in this consultation that required action. This criterion is not relevant and is excluded from scoring.',
           evidence: this.extractEvidence(consultationText, criterion)
         };
       }
@@ -153,6 +183,35 @@ class AssessmentService {
   }
 
   /**
+   * Check if this is a telephone consultation
+   */
+  isTelephoneConsultation(consultationText) {
+    const telephoneKeywords = [
+      'telephone', 'phone', 'tel:', 'telephon', 'phone call',
+      'spoke to patient', 'called patient', 'patient called',
+      'telephone consultation', 'phone consultation'
+    ];
+    
+    const lowerText = consultationText.toLowerCase();
+    return telephoneKeywords.some(keyword => lowerText.includes(keyword));
+  }
+
+  /**
+   * Check if anything was prescribed in the consultation
+   */
+  hasPrescribing(consultationText) {
+    const prescribingKeywords = [
+      'prescribed', 'prescription', 'rx:', 'medication:', 'drug:',
+      'treatment:', 'dispense', 'supply', 'mg', 'ml', 'tablets',
+      'capsules', 'dose', 'dosage', 'once daily', 'twice daily',
+      'bd', 'tds', 'qds', 'prn'
+    ];
+    
+    const lowerText = consultationText.toLowerCase();
+    return prescribingKeywords.some(keyword => lowerText.includes(keyword));
+  }
+
+  /**
    * Check if consultation has Read code - looks for "Problem:" followed by a diagnosis
    */
   checkForReadCode(consultationText) {
@@ -182,6 +241,7 @@ class AssessmentService {
     if (criterion.ratings.unacceptable) {
       ratingsText += `\n- UNACCEPTABLE (U): ${criterion.ratings.unacceptable}`;
     }
+    ratingsText += `\n- NOT RELEVANT (N): This criterion is not applicable to this consultation type and should be excluded from assessment`;
 
     return `You are assessing a GP consultation note against the following criterion:
 
@@ -198,6 +258,7 @@ ASSESSMENT GUIDANCE:
 - Apply rigorous professional documentation standards
 - Assess what IS documented but also critically evaluate gaps and omissions
 - Consider clinical context but maintain high standards for documentation quality
+- Use NOT RELEVANT (N) when a criterion genuinely doesn't apply to the consultation (e.g., prescribing when nothing prescribed, examination for telephone consultations)
 - Rate as "Unacceptable" for clear patient safety concerns or major documentation failures
 - Rate as "Concern" for missing information, inadequate detail, or documentation that falls short of best practice
 - Rate as "Acceptable" only when documentation clearly meets comprehensive professional standards
@@ -207,7 +268,7 @@ ASSESSMENT GUIDANCE:
 
 Please provide your assessment in the following format:
 
-RATING: [A/C/U]
+RATING: [A/C/U/N]
 EXPLANATION: [Detailed explanation of why you gave this rating, with specific evidence from the consultation note. Be thorough and identify areas for improvement.]
 
 Be specific and quote relevant parts of the consultation note where appropriate.`;
@@ -217,12 +278,13 @@ Be specific and quote relevant parts of the consultation note where appropriate.
    * Extract rating from AI response
    */
   extractRating(aiResponse) {
-    const ratingMatch = aiResponse.match(/RATING:\s*([ACU])/i);
+    const ratingMatch = aiResponse.match(/RATING:\s*([ACUN])/i);
     if (ratingMatch) {
       const rating = ratingMatch[1].toUpperCase();
       if (rating === 'A') return 'acceptable';
       if (rating === 'C') return 'concern';
       if (rating === 'U') return 'unacceptable';
+      if (rating === 'N') return 'not-relevant';
     }
     // Default to concern if unclear
     return 'concern';

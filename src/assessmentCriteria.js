@@ -159,23 +159,29 @@ export function calculateScore(criteriaRatings) {
   let acceptableCount = 0;
   let concernCount = 0;
   let unacceptableCount = 0;
+  let notRelevantCount = 0;
   
   criteriaRatings.forEach(rating => {
     if (rating === 'A' || rating === 'acceptable') acceptableCount++;
     else if (rating === 'C' || rating === 'concern') concernCount++;
     else if (rating === 'U' || rating === 'unacceptable') unacceptableCount++;
+    else if (rating === 'N' || rating === 'not-relevant') notRelevantCount++;
   });
   
-  const total = criteriaRatings.length;
-  // Scoring: A=1, C=0.6 (partial credit), U=0
+  // Exclude not-relevant from total when calculating score
+  const totalRelevant = criteriaRatings.length - notRelevantCount;
+  
+  // Scoring: A=1, C=0.6 (partial credit), U=0, N=excluded
   const score = (acceptableCount * 1) + (concernCount * 0.6);
-  const percentage = (score / total) * 100;
+  const percentage = totalRelevant > 0 ? (score / totalRelevant) * 100 : 0;
   
   return {
     acceptable: acceptableCount,
     concern: concernCount,
     unacceptable: unacceptableCount,
-    total,
+    notRelevant: notRelevantCount,
+    total: criteriaRatings.length,
+    totalRelevant,
     score,
     percentage: Math.round(percentage * 100) / 100,
     ragRating: calculateRAGRating(percentage)
