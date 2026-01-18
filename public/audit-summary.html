@@ -307,13 +307,134 @@
             margin-bottom: 12px;
             transition: all 0.2s;
             border: 1px solid #e8ecf1;
+            cursor: pointer;
         }
 
         .consultation-item:hover {
             background: linear-gradient(135deg, #f0f2f8 0%, #ffffff 100%);
-            transform: translateX(5px);
             border-color: #667eea;
             box-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
+        }
+
+        .consultation-details {
+            display: none;
+            padding: 20px;
+            margin-top: -8px;
+            margin-bottom: 12px;
+            background: white;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #e8ecf1;
+            border-top: none;
+        }
+
+        .consultation-details.active {
+            display: block;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .score-breakdown {
+            background: #f8f9fc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e8ecf1;
+        }
+
+        .score-breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .criteria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .criterion {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e8ecf1;
+            transition: all 0.2s;
+        }
+
+        .criterion:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .criterion.acceptable {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .criterion.concern {
+            border-left-color: #ff9800;
+            background: #fff8f1;
+        }
+
+        .criterion.unacceptable {
+            border-left-color: #f44336;
+            background: #fef5f5;
+        }
+
+        .criterion-title {
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+
+        .criterion-rating {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .criterion-rating.acceptable {
+            background: #4caf50;
+            color: white;
+        }
+
+        .criterion-rating.concern {
+            background: #ff9800;
+            color: white;
+        }
+
+        .criterion-rating.unacceptable {
+            background: #f44336;
+            color: white;
+        }
+
+        .criterion-explanation {
+            font-size: 0.9em;
+            color: #5a6c7d;
+            line-height: 1.5;
+        }
+
+        .arrow-icon {
+            transition: transform 0.3s;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .arrow-icon.rotated {
+            transform: rotate(90deg);
         }
 
         .consultation-info {
@@ -560,15 +681,21 @@
 
                     <div class="consultations-list">
                         <h3>Individual Consultations</h3>
-                        ${audit.consultations.map(consultation => `
-                            <div class="consultation-item">
-                                <div class="consultation-info">
-                                    <div class="consultation-number">Note ${consultation.consultationNumber}</div>
-                                    <div class="consultation-date">${consultation.consultationDate}</div>
+                        ${audit.consultations.map((consultation, idx) => `
+                            <div>
+                                <div class="consultation-item" onclick="toggleConsultationDetails('${audit.referenceNumber}', ${idx})">
+                                    <div class="consultation-info">
+                                        <div class="consultation-number">Note ${consultation.consultationNumber}</div>
+                                        <div class="consultation-date">${consultation.consultationDate}</div>
+                                    </div>
+                                    <div class="consultation-score">
+                                        <div class="score-value">${consultation.score.toFixed(1)}%</div>
+                                        <span class="rag-badge rag-${consultation.ragRating}">${consultation.ragRating}</span>
+                                        <span class="arrow-icon" id="arrow-${audit.referenceNumber}-${idx}">▶</span>
+                                    </div>
                                 </div>
-                                <div class="consultation-score">
-                                    <div class="score-value">${consultation.score.toFixed(1)}%</div>
-                                    <span class="rag-badge rag-${consultation.ragRating}">${consultation.ragRating}</span>
+                                <div class="consultation-details" id="details-${audit.referenceNumber}-${idx}">
+                                    <div class="loading">Loading details...</div>
                                 </div>
                             </div>
                         `).join('')}
@@ -602,6 +729,79 @@
                 console.error('Failed to copy link:', err);
                 alert('Failed to copy link to clipboard');
             });
+        }
+
+        // Toggle consultation details
+        async function toggleConsultationDetails(referenceNumber, index) {
+            const detailsDiv = document.getElementById(`details-${referenceNumber}-${index}`);
+            const arrow = document.getElementById(`arrow-${referenceNumber}-${index}`);
+            
+            // Toggle visibility
+            if (detailsDiv.classList.contains('active')) {
+                detailsDiv.classList.remove('active');
+                arrow.classList.remove('rotated');
+                return;
+            }
+            
+            // Show and load if not already loaded
+            detailsDiv.classList.add('active');
+            arrow.classList.add('rotated');
+            
+            // Check if already loaded
+            if (detailsDiv.dataset.loaded) return;
+            
+            // Find the consultation in auditsData
+            const audit = auditsData.find(a => a.referenceNumber === referenceNumber);
+            if (!audit) return;
+            
+            const consultation = audit.consultations[index];
+            
+            try {
+                // Fetch full assessment details
+                const response = await fetch(`/api/assessments/${consultation.id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayConsultationDetails(detailsDiv, data.assessment);
+                    detailsDiv.dataset.loaded = 'true';
+                }
+            } catch (error) {
+                console.error('Error loading consultation details:', error);
+                detailsDiv.innerHTML = '<div style="padding: 20px; color: #f44336;">Failed to load details</div>';
+            }
+        }
+
+        function displayConsultationDetails(container, assessment) {
+            const criteriaHtml = assessment.assessment.criteriaAssessments.map(criteria => `
+                <div class="criterion ${criteria.rating}">
+                    <div class="criterion-title">${criteria.criterionTitle}</div>
+                    <div class="criterion-rating ${criteria.rating}">${criteria.rating}</div>
+                    <div class="criterion-explanation">${criteria.explanation}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="detail-section">
+                    <h4>Overall Summary</h4>
+                    <p style="line-height: 1.6; color: #5a6c7d;">${assessment.assessment.overallSummary}</p>
+                </div>
+
+                <div class="score-breakdown">
+                    <strong style="color: #1e3c72;">Score Breakdown</strong>
+                    <div class="score-breakdown-grid">
+                        <div>✅ Acceptable: <strong>${assessment.assessment.scoring.acceptable}</strong></div>
+                        <div>⚠️ Concern: <strong>${assessment.assessment.scoring.concern}</strong></div>
+                        <div>❌ Unacceptable: <strong>${assessment.assessment.scoring.unacceptable}</strong></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>Assessment Criteria</h4>
+                    <div class="criteria-grid">
+                        ${criteriaHtml}
+                    </div>
+                </div>
+            `;
         }
 
         // Check if a specific reference is in the URL and scroll to it

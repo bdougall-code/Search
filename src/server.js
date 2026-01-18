@@ -246,8 +246,7 @@ app.get('/api/assessments/:id', async (req, res) => {
     }
     
     const assessment = await collection.findOne(
-      { _id: new ObjectId(id), type: 'gp_consultation_assessment' },
-      { projection: { embedding: 0 } }
+      { _id: new ObjectId(id), type: 'gp_consultation_assessment' }
     );
     
     if (!assessment) {
@@ -258,7 +257,13 @@ app.get('/api/assessments/:id', async (req, res) => {
       success: true,
       assessment: {
         id: assessment._id,
-        ...assessment
+        type: assessment.type,
+        consultationText: assessment.consultationText,
+        assessment: assessment.assessment,
+        metadata: assessment.metadata,
+        ragRating: assessment.ragRating,
+        score: assessment.score,
+        createdAt: assessment.createdAt
       }
     });
   } catch (error) {
