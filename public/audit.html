@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Consultation Audit System</title>
+    <!-- SheetJS library for Excel file parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -728,17 +730,26 @@
             <div class="form-group">
                 <label for="consultationData" style="font-size: 1.2em; font-weight: bold;">
                     <span style="background: #667eea; color: white; padding: 5px 12px; border-radius: 50%; margin-right: 10px;">4</span>
-                    STEP 4: Paste Consultation Notes
+                    STEP 4: Upload Excel File or Paste Consultation Notes
                 </label>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #667eea;">📊 Upload Excel File (Optional):</label>
+                    <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: block; margin-bottom: 10px;" onchange="handleExcelUpload(event)">
+                    <div style="font-size: 0.85em; color: #666; font-style: italic;">
+                        Upload an Excel file with consultation data, or paste text below. Excel file will automatically populate the text area.
+                    </div>
+                </div>
+
                 <div class="toggle-view">
                     <button type="button" onclick="toggleHighlightView()" id="toggleViewBtn">🔍 Show Highlighted Issues</button>
                 </div>
                 <textarea 
                     id="consultationData" 
-                    placeholder="Paste consultation notes in one of these formats:&#10;&#10;Format 1 (Standard):&#10;Date		Consultation Text&#10;17-Dec-2024 14:15		Face to face consultation...&#10;&#10;Format 2 (With UUID):&#10;uuid-here      11-Dec-2025 Face to face consultation Problem..."></textarea>
+                    placeholder="Paste consultation notes in one of these formats:&#10;&#10;Format 1 (Standard):&#10;Date		Consultation Text&#10;17-Dec-2024 14:15		Face to face consultation...&#10;&#10;Format 2 (With UUID):&#10;uuid-here      11-Dec-2025 Face to face consultation Problem...&#10;&#10;OR upload an Excel file above"></textarea>
                 <div class="text-preview" id="textPreview"></div>
                 <div class="help-text">
-                    Final step: Paste your consultation notes. Supports both standard format (Date + Text) and UUID-prefixed format. Each consultation should start with a date.
+                    Final step: Upload an Excel file or paste your consultation notes. Supports standard format, UUID-prefixed format, and Excel files.
                 </div>
                 <div class="validation-warning" id="validationWarning">
                     <h4>⚠️ Potential Patient Identifiable Information Detected</h4>
@@ -771,6 +782,65 @@
         let hasValidationIssues = false;
         let currentIssues = [];
         let showingHighlights = false;
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get the first sheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to array of arrays (rows)
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                    
+                    // Process rows and build consultation text
+                    let consultationText = '';
+                    
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        // Skip empty rows
+                        if (!row || row.every(cell => !cell || cell.toString().trim() === '')) continue;
+                        
+                        // Join all non-empty cells with spaces or tabs
+                        const rowText = row.filter(cell => cell && cell.toString().trim() !== '')
+                                          .join(' ')
+                                          .trim();
+                        
+                        if (rowText) {
+                            consultationText += rowText + '\n';
+                        }
+                    }
+                    
+                    // Set the textarea value
+                    const textarea = document.getElementById('consultationData');
+                    textarea.value = consultationText;
+                    
+                    // Trigger validation
+                    const issues = validateConsultationData(consultationText);
+                    displayValidationIssues(issues);
+                    updateStartButton();
+                    
+                    alert('✅ Excel file loaded successfully! Please review the consultation data below.');
+                    
+                } catch (error) {
+                    console.error('Error parsing Excel file:', error);
+                    alert('❌ Error reading Excel file. Please ensure it\'s a valid .xlsx or .xls file.\n\nError: ' + error.message);
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('❌ Error reading file. Please try again.');
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
 
         function selectReviewType(type) {
             console.log('selectReviewType called with:', type);
