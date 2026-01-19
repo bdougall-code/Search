@@ -735,6 +735,20 @@
                 
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #667eea;">📊 Upload Excel File (Optional):</label>
+                    
+                    <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                        <strong style="color: #1976d2;">📋 How to Generate the Excel File from EMIS:</strong>
+                        <ol style="margin: 10px 0 10px 20px; color: #555;">
+                            <li>Download the EMIS search template: <a href="Patient List Audit.xml" download style="color: #667eea; font-weight: 600; text-decoration: underline;">Patient List Audit.xml</a></li>
+                            <li>Import this search into EMIS and run it to generate your consultation data</li>
+                            <li>Export the results as an Excel file and upload it below</li>
+                        </ol>
+                        <div style="margin-top: 10px;">
+                            <strong style="color: #1976d2;">📺 Need help?</strong> Watch this tutorial: 
+                            <a href="https://youtu.be/5FBeLBM8uBg" target="_blank" style="color: #667eea; font-weight: 600; text-decoration: underline;">How to Run EMIS Searches (YouTube)</a>
+                        </div>
+                    </div>
+                    
                     <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: block; margin-bottom: 10px;" onchange="handleExcelUpload(event)">
                     <div style="font-size: 0.85em; color: #666; font-style: italic;">
                         Upload an Excel file with consultation data, or paste text below. Excel file will automatically populate the text area.
