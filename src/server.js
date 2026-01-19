@@ -6,7 +6,7 @@ import { database } from './database.js';
 import { config } from './config.js';
 import { uploadDocument, searchDocuments, getAllDocuments, deleteDocument, assessConsultation, getAssessmentStats } from './searchService.js';
 import auditService from './auditService.js';
-import { validateForPII, hasHighSeverityIssues, formatIssues } from './piiValidator.js';
+import { validateForPII, hasHighSeverityIssues, formatIssues, validateAndAnonymize } from './piiValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -282,21 +282,28 @@ app.post('/api/audit/rapid-review', async (req, res) => {
       return res.status(400).json({ error: 'Consultation data is required' });
     }
 
-    // Validate for PII
-    const piiIssues = validateForPII(consultationData);
-    if (piiIssues.length > 0) {
-      console.warn(`⚠️ PII Validation Issues: ${formatIssues(piiIssues)}`);
+    console.log(`Starting Rapid Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
+    
+    // Validate and anonymize PII (including person names)
+    const { issues, anonymizedText, nameReplacements, hasNames } = await validateAndAnonymize(consultationData);
+    
+    if (issues.length > 0) {
+      console.warn(`⚠️ PII Validation Issues: ${formatIssues(issues)}`);
       
-      if (hasHighSeverityIssues(piiIssues)) {
+      // Check for high severity non-name issues (names are auto-anonymized)
+      const nonNameIssues = issues.filter(issue => issue.type !== 'PERSON_NAMES');
+      if (hasHighSeverityIssues(nonNameIssues)) {
         return res.status(400).json({ 
           error: 'Patient identifiable information detected. Please anonymize the data before submitting.',
-          piiIssues: piiIssues
+          piiIssues: nonNameIssues
         });
       }
     }
-
-    console.log(`Starting Rapid Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
-    const results = await auditService.conductRapidReview(consultationData, { doctorInitials, referenceNumber });
+    
+    // Use anonymized text for processing
+    const dataToProcess = hasNames ? anonymizedText : consultationData;
+    
+    const results = await auditService.conductRapidReview(dataToProcess, { doctorInitials, referenceNumber });
     
     // Add doctor initials and reference number to results
     if (doctorInitials) {
@@ -304,6 +311,13 @@ app.post('/api/audit/rapid-review', async (req, res) => {
     }
     if (referenceNumber) {
       results.referenceNumber = referenceNumber;
+    }
+    
+    // Add anonymization info if names were replaced
+    if (hasNames) {
+      results.anonymizationApplied = true;
+      results.nameReplacements = nameReplacements;
+      results.anonymizationNote = `${nameReplacements.length} person name(s) were automatically replaced with initials for privacy protection.`;
     }
     
     res.status(200).json(results);
@@ -322,21 +336,28 @@ app.post('/api/audit/full-review', async (req, res) => {
       return res.status(400).json({ error: 'Consultation data is required' });
     }
 
-    // Validate for PII
-    const piiIssues = validateForPII(consultationData);
-    if (piiIssues.length > 0) {
-      console.warn(`⚠️ PII Validation Issues: ${formatIssues(piiIssues)}`);
+    console.log(`Starting Full Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
+    
+    // Validate and anonymize PII (including person names)
+    const { issues, anonymizedText, nameReplacements, hasNames } = await validateAndAnonymize(consultationData);
+    
+    if (issues.length > 0) {
+      console.warn(`⚠️ PII Validation Issues: ${formatIssues(issues)}`);
       
-      if (hasHighSeverityIssues(piiIssues)) {
+      // Check for high severity non-name issues (names are auto-anonymized)
+      const nonNameIssues = issues.filter(issue => issue.type !== 'PERSON_NAMES');
+      if (hasHighSeverityIssues(nonNameIssues)) {
         return res.status(400).json({ 
           error: 'Patient identifiable information detected. Please anonymize the data before submitting.',
-          piiIssues: piiIssues
+          piiIssues: nonNameIssues
         });
       }
     }
-
-    console.log(`Starting Full Review${doctorInitials ? ` for Dr. ${doctorInitials}` : ''}...`);
-    const results = await auditService.conductFullReview(consultationData, { doctorInitials, referenceNumber });
+    
+    // Use anonymized text for processing
+    const dataToProcess = hasNames ? anonymizedText : consultationData;
+    
+    const results = await auditService.conductFullReview(dataToProcess, { doctorInitials, referenceNumber });
     
     // Add doctor initials and reference number to results
     if (doctorInitials) {
@@ -344,6 +365,13 @@ app.post('/api/audit/full-review', async (req, res) => {
     }
     if (referenceNumber) {
       results.referenceNumber = referenceNumber;
+    }
+    
+    // Add anonymization info if names were replaced
+    if (hasNames) {
+      results.anonymizationApplied = true;
+      results.nameReplacements = nameReplacements;
+      results.anonymizationNote = `${nameReplacements.length} person name(s) were automatically replaced with initials for privacy protection.`;
     }
     
     res.status(200).json(results);

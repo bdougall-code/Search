@@ -19,6 +19,49 @@ class AuditService {
   }
 
   /**
+   * Create excerpts from consultation text for validation purposes
+   * Only includes relevant snippets to support assessment explanations
+   * @param {string} fullText - Full consultation text
+   * @param {Array} criteriaAssessments - Assessment results
+   * @returns {Array} Array of excerpt objects
+   */
+  createExcerpts(fullText, criteriaAssessments) {
+    const excerpts = [];
+    
+    // For each criteria that has evidence or concerns, extract relevant snippet
+    criteriaAssessments.forEach(criteria => {
+      if (criteria.rating === 'concern' || criteria.rating === 'unacceptable') {
+        // Extract a snippet around key terms mentioned in the explanation
+        const explanation = criteria.explanation.toLowerCase();
+        const text = fullText.toLowerCase();
+        
+        // Try to find relevant text mentioned in explanation
+        const words = explanation.match(/["']([^"']+)["']/g);
+        if (words && words.length > 0) {
+          const searchTerm = words[0].replace(/["']/g, '');
+          const index = text.indexOf(searchTerm);
+          
+          if (index !== -1) {
+            // Extract 100 chars before and after
+            const start = Math.max(0, index - 100);
+            const end = Math.min(fullText.length, index + searchTerm.length + 100);
+            const excerpt = fullText.substring(start, end);
+            
+            excerpts.push({
+              criterionId: criteria.criterionId,
+              criterionTitle: criteria.criterionTitle,
+              excerpt: (start > 0 ? '...' : '') + excerpt + (end < fullText.length ? '...' : ''),
+              context: `Evidence for ${criteria.rating} rating`
+            });
+          }
+        }
+      }
+    });
+    
+    return excerpts;
+  }
+
+  /**
    * Parse consultation text in the format provided by the user
    * @param {string} consultationData - Raw consultation data
    * @returns {Array} Array of parsed consultation objects
@@ -127,8 +170,21 @@ class AuditService {
     const individualAssessments = await Promise.all(assessmentPromises);
     console.log(`\n✓ All ${consultations.length} consultations assessed`);
     
-    // Save each assessment to database
+    // Save each assessment to database (with full text for records)
     await this.saveAssessmentsToDatabase(individualAssessments);
+    
+    // Create sanitized version for API response (without full consultation text)
+    const sanitizedAssessments = individualAssessments.map(item => ({
+      consultationNumber: item.consultationNumber,
+      consultationDate: item.consultationDate,
+      // Include only excerpts, not full consultation text
+      excerpts: this.createExcerpts(item.consultationText, item.assessment.criteriaAssessments),
+      assessment: {
+        ...item.assessment,
+        // Remove full consultation text from response
+        consultationText: undefined
+      }
+    }));
     
     // Calculate summary statistics
     const summary = this.calculateReviewSummary(individualAssessments);
@@ -143,7 +199,7 @@ class AuditService {
       totalConsultations: consultations.length,
       completedAt: new Date().toISOString(),
       processingTime: totalTime,
-      individualAssessments,
+      individualAssessments: sanitizedAssessments,
       summary
     };
   }
@@ -159,13 +215,22 @@ class AuditService {
     const startTime = Date.now();
     
     // Parse the consultations
-    const consultations = this.parseConsultations(consultationData);
+    const allConsultations = this.parseConsultations(consultationData);
     
-    if (consultations.length < 10) {
-      throw new Error(`Full Review requires at least 10 consultations. Found: ${consultations.length}`);
+    if (allConsultations.length < 10) {
+      throw new Error(`Full Review requires at least 10 consultations. Found: ${allConsultations.length}`);
     }
     
-    console.log(`Found ${consultations.length} consultations to review\n`);
+    // Limit to maximum 20 consultations
+    const MAX_CONSULTATIONS = 20;
+    const consultations = allConsultations.slice(0, MAX_CONSULTATIONS);
+    const excludedCount = allConsultations.length - consultations.length;
+    
+    if (excludedCount > 0) {
+      console.log(`⚠️ Maximum of ${MAX_CONSULTATIONS} consultations will be analyzed. ${excludedCount} consultation(s) excluded.`);
+    }
+    
+    console.log(`Found ${allConsultations.length} consultations, analyzing ${consultations.length}\n`);
     
     // Process consultations in parallel batches to avoid overwhelming the API
     // Batch size of 5 consultations at a time is a good balance
@@ -206,8 +271,21 @@ class AuditService {
     
     console.log(`\n✓ All ${consultations.length} consultations assessed`);
     
-    // Save each assessment to database
+    // Save each assessment to database (with full text for records)
     await this.saveAssessmentsToDatabase(individualAssessments);
+    
+    // Create sanitized version for API response (without full consultation text)
+    const sanitizedAssessments = individualAssessments.map(item => ({
+      consultationNumber: item.consultationNumber,
+      consultationDate: item.consultationDate,
+      // Include only excerpts, not full consultation text
+      excerpts: this.createExcerpts(item.consultationText, item.assessment.criteriaAssessments),
+      assessment: {
+        ...item.assessment,
+        // Remove full consultation text from response
+        consultationText: undefined
+      }
+    }));
     
     // Calculate comprehensive summary statistics
     const summary = this.calculateReviewSummary(individualAssessments);
@@ -223,9 +301,10 @@ class AuditService {
     return {
       reviewType: 'Full Review',
       totalConsultations: consultations.length,
+      excludedConsultations: excludedCount,
       completedAt: new Date().toISOString(),
       processingTime: totalTime,
-      individualAssessments,
+      individualAssessments: sanitizedAssessments,
       summary,
       detailedAnalysis
     };
