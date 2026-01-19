@@ -797,37 +797,101 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
-                    // Convert to array of arrays (rows)
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                    // Convert to JSON using headers from first row
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
                     
-                    // Process rows and build consultation text
+                    if (jsonData.length === 0) {
+                        alert('❌ No data found in Excel file.');
+                        return;
+                    }
+                    
+                    // Get column headers
+                    const headers = Object.keys(jsonData[0]);
+                    console.log('Excel headers:', headers);
+                    
+                    // Process each row as a consultation
                     let consultationText = '';
                     
-                    for (let i = 0; i < rows.length; i++) {
-                        const row = rows[i];
-                        // Skip empty rows
-                        if (!row || row.every(cell => !cell || cell.toString().trim() === '')) continue;
-                        
-                        // Join all non-empty cells with spaces or tabs
-                        const rowText = row.filter(cell => cell && cell.toString().trim() !== '')
-                                          .join(' ')
-                                          .trim();
-                        
-                        if (rowText) {
-                            consultationText += rowText + '\n';
+                    for (let row of jsonData) {
+                        // Start each consultation with identifiable data
+                        for (let header of headers) {
+                            const value = row[header];
+                            if (!value || value.toString().trim() === '') continue;
+                            
+                            const cellValue = value.toString().trim();
+                            
+                            // Map common header names to section labels
+                            const headerLower = header.toLowerCase();
+                            
+                            // Check for UUID (often first column, various names)
+                            if (headerLower.includes('uuid') || headerLower.includes('id') || headerLower.includes('guid')) {
+                                consultationText += cellValue + '\n';
+                            }
+                            // Date columns
+                            else if (headerLower.includes('date') || headerLower.includes('time')) {
+                                consultationText += cellValue + '\n';
+                            }
+                            // Consultation type
+                            else if (headerLower.includes('consultation') && headerLower.includes('type')) {
+                                consultationText += cellValue + '\n';
+                            }
+                            else if (cellValue.match(/(Face to face consultation|Telephone consultation|Phone consultation|Home visit|Video consultation)/i)) {
+                                consultationText += cellValue + '\n';
+                            }
+                            // Problem/Diagnosis
+                            else if (headerLower.includes('problem') || headerLower.includes('diagnosis')) {
+                                consultationText += 'Problem\n';
+                                consultationText += cellValue + '\n';
+                            }
+                            // History
+                            else if (headerLower.includes('history') || headerLower.includes('hx')) {
+                                consultationText += 'History\n';
+                                consultationText += cellValue + '\n';
+                            }
+                            // Examination
+                            else if (headerLower.includes('examination') || headerLower.includes('exam') || headerLower.includes('o/e')) {
+                                consultationText += 'Examination\n';
+                                consultationText += cellValue + '\n';
+                            }
+                            // Comment/Notes
+                            else if (headerLower.includes('comment') || headerLower.includes('note') || headerLower.includes('management')) {
+                                consultationText += 'Comment\n';
+                                consultationText += cellValue + '\n';
+                            }
+                            // Medication/Prescription
+                            else if (headerLower.includes('medication') || headerLower.includes('prescription') || 
+                                     headerLower.includes('drug') || headerLower.includes('medicine')) {
+                                // Medications might be in multiple columns (name, dose, instructions)
+                                consultationText += cellValue + '\n';
+                            }
+                            // Plan
+                            else if (headerLower.includes('plan')) {
+                                consultationText += 'Plan\n';
+                                consultationText += cellValue + '\n';
+                            }
+                            // Generic - just add the value with the header as context
+                            else {
+                                // For other columns, use the header as the section name
+                                const sectionName = header.charAt(0).toUpperCase() + header.slice(1);
+                                consultationText += sectionName + '\n';
+                                consultationText += cellValue + '\n';
+                            }
                         }
+                        
+                        // Add spacing between consultations
+                        consultationText += '\n';
                     }
                     
                     // Set the textarea value
                     const textarea = document.getElementById('consultationData');
-                    textarea.value = consultationText;
+                    textarea.value = consultationText.trim();
                     
                     // Trigger validation
                     const issues = validateConsultationData(consultationText);
                     displayValidationIssues(issues);
                     updateStartButton();
                     
-                    alert('✅ Excel file loaded successfully! Please review the consultation data below.');
+                    alert(`✅ Excel file loaded successfully!\n\nFound ${jsonData.length} row(s) of data.\nHeaders detected: ${headers.join(', ')}\n\nPlease review the consultation data below.`);
                     
                 } catch (error) {
                     console.error('Error parsing Excel file:', error);
