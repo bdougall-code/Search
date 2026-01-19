@@ -63,6 +63,7 @@ class AuditService {
 
   /**
    * Parse consultation text in the format provided by the user
+   * Handles both single-line and multi-line Excel export formats
    * @param {string} consultationData - Raw consultation data
    * @returns {Array} Array of parsed consultation objects
    */
@@ -70,16 +71,61 @@ class AuditService {
     const consultations = [];
     const lines = consultationData.trim().split('\n');
     let currentConsultation = null;
+    let i = 0;
     
-    for (let i = 0; i < lines.length; i++) {
+    while (i < lines.length) {
       const line = lines[i].trim();
       
       // Check if line starts with "Date" header (skip it)
       if (line.startsWith('Date') && line.includes('Consultation Text')) {
+        i++;
         continue;
       }
       
-      // Check for UUID-prefixed format (UUID followed by date)
+      // Check for UUID at start of line (Excel multi-line format)
+      const uuidOnlyMatch = line.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\s*$/i);
+      
+      if (uuidOnlyMatch) {
+        // Save previous consultation if exists
+        if (currentConsultation) {
+          consultations.push(currentConsultation);
+        }
+        
+        // Multi-line format: UUID on one line, date on next, consultation type on next
+        const uuid = line;
+        i++;
+        
+        // Get date from next line
+        let date = '00:00';
+        if (i < lines.length) {
+          const dateLine = lines[i].trim();
+          const dateOnlyMatch = dateLine.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4})\s*$/i);
+          if (dateOnlyMatch) {
+            date = dateOnlyMatch[1] + ' 00:00';
+            i++;
+          }
+        }
+        
+        // Get consultation type from next line (if exists)
+        let consultationType = '';
+        if (i < lines.length) {
+          const typeLine = lines[i].trim();
+          if (typeLine && !typeLine.includes('\t\t')) {
+            consultationType = typeLine;
+            i++;
+          }
+        }
+        
+        // Start new consultation
+        currentConsultation = {
+          date: date,
+          text: consultationType,
+          fullText: uuid + '\n' + date + '\n' + consultationType
+        };
+        continue;
+      }
+      
+      // Check for UUID-prefixed format (UUID followed by date on same line)
       // Format: UUID   DD-MMM-YYYY Face to face consultation...
       const uuidDateMatch = line.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\s+(\d{1,2}-[A-Za-z]{3}-\d{4})\s+(.+)/i);
       
@@ -95,28 +141,36 @@ class AuditService {
           text: uuidDateMatch[2],
           fullText: line
         };
-      } else {
-        // Check for standard date pattern (DD-MMM-YYYY HH:MM)
-        const dateMatch = line.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2})\s+(.+)/);
-        
-        if (dateMatch) {
-          // Save previous consultation if exists
-          if (currentConsultation) {
-            consultations.push(currentConsultation);
-          }
-          
-          // Start new consultation
-          currentConsultation = {
-            date: dateMatch[1],
-            text: dateMatch[2],
-            fullText: line
-          };
-        } else if (currentConsultation && line) {
-          // Continue building current consultation text
-          currentConsultation.text += '\n' + line;
-          currentConsultation.fullText += '\n' + line;
-        }
+        i++;
+        continue;
       }
+      
+      // Check for standard date pattern (DD-MMM-YYYY HH:MM)
+      const dateMatch = line.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2})\s+(.+)/);
+      
+      if (dateMatch) {
+        // Save previous consultation if exists
+        if (currentConsultation) {
+          consultations.push(currentConsultation);
+        }
+        
+        // Start new consultation
+        currentConsultation = {
+          date: dateMatch[1],
+          text: dateMatch[2],
+          fullText: line
+        };
+        i++;
+        continue;
+      }
+      
+      // Continue building current consultation text
+      if (currentConsultation && line) {
+        currentConsultation.text += '\n' + line;
+        currentConsultation.fullText += '\n' + line;
+      }
+      
+      i++;
     }
     
     // Add the last consultation
