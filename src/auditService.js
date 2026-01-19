@@ -36,25 +36,43 @@ class AuditService {
         continue;
       }
       
-      // Check for date pattern (DD-MMM-YYYY HH:MM)
-      const dateMatch = line.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2})\s+(.+)/);
+      // Check for UUID-prefixed format (UUID followed by date)
+      // Format: UUID   DD-MMM-YYYY Face to face consultation...
+      const uuidDateMatch = line.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\s+(\d{1,2}-[A-Za-z]{3}-\d{4})\s+(.+)/i);
       
-      if (dateMatch) {
+      if (uuidDateMatch) {
         // Save previous consultation if exists
         if (currentConsultation) {
           consultations.push(currentConsultation);
         }
         
-        // Start new consultation
+        // Start new consultation (UUID format without time, use 00:00 as default)
         currentConsultation = {
-          date: dateMatch[1],
-          text: dateMatch[2],
+          date: uuidDateMatch[1] + ' 00:00',
+          text: uuidDateMatch[2],
           fullText: line
         };
-      } else if (currentConsultation && line) {
-        // Continue building current consultation text
-        currentConsultation.text += '\n' + line;
-        currentConsultation.fullText += '\n' + line;
+      } else {
+        // Check for standard date pattern (DD-MMM-YYYY HH:MM)
+        const dateMatch = line.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2})\s+(.+)/);
+        
+        if (dateMatch) {
+          // Save previous consultation if exists
+          if (currentConsultation) {
+            consultations.push(currentConsultation);
+          }
+          
+          // Start new consultation
+          currentConsultation = {
+            date: dateMatch[1],
+            text: dateMatch[2],
+            fullText: line
+          };
+        } else if (currentConsultation && line) {
+          // Continue building current consultation text
+          currentConsultation.text += '\n' + line;
+          currentConsultation.fullText += '\n' + line;
+        }
       }
     }
     

@@ -735,10 +735,10 @@
                 </div>
                 <textarea 
                     id="consultationData" 
-                    placeholder="Paste consultation notes in the format:&#10;&#10;Date		Consultation Text&#10;17-Dec-2024 14:15		Face to face consultation...&#10;&#10;Date		Consultation Text&#10;17-Dec-2024 14:33		Face to face consultation..."></textarea>
+                    placeholder="Paste consultation notes in one of these formats:&#10;&#10;Format 1 (Standard):&#10;Date		Consultation Text&#10;17-Dec-2024 14:15		Face to face consultation...&#10;&#10;Format 2 (With UUID):&#10;uuid-here      11-Dec-2025 Face to face consultation Problem..."></textarea>
                 <div class="text-preview" id="textPreview"></div>
                 <div class="help-text">
-                    Final step: Paste your consultation notes with the Date and Consultation Text format. Each consultation should start with a date/time stamp.
+                    Final step: Paste your consultation notes. Supports both standard format (Date + Text) and UUID-prefixed format. Each consultation should start with a date.
                 </div>
                 <div class="validation-warning" id="validationWarning">
                     <h4>⚠️ Potential Patient Identifiable Information Detected</h4>
