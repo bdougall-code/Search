@@ -846,22 +846,6 @@
                     case 'NHS Number':
                         pattern = /\b\d{3}[\s-]?\d{3}[\s-]?\d{4}\b/g;
                         break;
-                    case 'Patient Name':
-                        const namePatterns = [
-                            /\bPatient[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/gi,
-                            /\bName[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/gi,
-                            /\bMr\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                            /\bMrs\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                            /\bMiss\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                            /\bMs\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                        ];
-                        namePatterns.forEach(p => {
-                            let match;
-                            while ((match = p.exec(text)) !== null) {
-                                matches.push({ start: match.index, end: match.index + match[0].length, text: match[0], reason });
-                            }
-                        });
-                        return;
                     case 'Date of Birth':
                         pattern = /\b(DOB|Date of Birth|Born)[:\s]+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi;
                         break;
@@ -913,38 +897,6 @@
                     type: 'NHS Number',
                     count: nhsMatches.length,
                     message: `${nhsMatches.length} potential NHS number(s) found (10-digit numbers)`
-                });
-            }
-
-            // Check for patient name patterns (but exclude doctor names)
-            const namePatterns = [
-                /\bPatient[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/gi,
-                /\bName[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/gi,
-                /\bMr\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                /\bMrs\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                /\bMiss\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-                /\bMs\.?\s+[A-Z][a-z]+(?!\s*\(Dr)/gi,
-            ];
-            
-            let nameMatches = [];
-            namePatterns.forEach(pattern => {
-                const matches = text.match(pattern);
-                if (matches) {
-                    // Filter out doctor names (those followed by "(Dr)" or "Dr)")
-                    const filtered = matches.filter(match => {
-                        const index = text.indexOf(match);
-                        const afterMatch = text.substring(index + match.length, index + match.length + 10);
-                        return !afterMatch.includes('(Dr)') && !afterMatch.includes('Dr)');
-                    });
-                    nameMatches = nameMatches.concat(filtered);
-                }
-            });
-            
-            if (nameMatches.length > 0) {
-                issues.push({
-                    type: 'Patient Name',
-                    count: nameMatches.length,
-                    message: `${nameMatches.length} potential patient name(s) found`
                 });
             }
 
@@ -1026,10 +978,9 @@
                 updateHighlightedText();
             }
             
-            // Only block on high-severity issues (NHS numbers, names, DOB)
+            // Only block on high-severity issues (NHS numbers, DOB)
             const highSeverityIssues = issues.filter(issue => 
                 issue.type === 'NHS Number' || 
-                issue.type === 'Patient Name' || 
                 issue.type === 'Date of Birth'
             );
             
@@ -1128,7 +1079,6 @@
             const issues = validateConsultationData(consultationData);
             const highSeverityIssues = issues.filter(issue => 
                 issue.type === 'NHS Number' || 
-                issue.type === 'Patient Name' || 
                 issue.type === 'Date of Birth'
             );
             
@@ -1138,7 +1088,7 @@
                     'Critical patient identifiable information detected:\n\n' +
                     highSeverityIssues.map(i => `• ${i.message}`).join('\n') + '\n\n' +
                     'This violates data protection regulations (GDPR/Data Protection Act 2018).\n\n' +
-                    'You must remove NHS numbers, patient names, and dates of birth before proceeding.'
+                    'You must remove NHS numbers and dates of birth before proceeding.'
                 );
                 return;
             }
