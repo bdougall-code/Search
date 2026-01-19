@@ -809,72 +809,91 @@
                     const headers = Object.keys(jsonData[0]);
                     console.log('Excel headers:', headers);
                     
-                    // Process each row as a consultation
-                    let consultationText = '';
+                    // Group rows by the first column (Anonymised identifier)
+                    const identifierColumn = headers[0];
+                    console.log('Grouping by identifier column:', identifierColumn);
                     
+                    const groupedData = {};
                     for (let row of jsonData) {
-                        // Start each consultation with identifiable data
-                        for (let header of headers) {
-                            const value = row[header];
-                            if (!value || value.toString().trim() === '') continue;
-                            
-                            const cellValue = value.toString().trim();
-                            
-                            // Map common header names to section labels
-                            const headerLower = header.toLowerCase();
-                            
-                            // Check for UUID (often first column, various names)
-                            if (headerLower.includes('uuid') || headerLower.includes('id') || headerLower.includes('guid')) {
-                                consultationText += cellValue + '\n';
-                            }
-                            // Date columns
-                            else if (headerLower.includes('date') || headerLower.includes('time')) {
-                                consultationText += cellValue + '\n';
-                            }
-                            // Consultation type
-                            else if (headerLower.includes('consultation') && headerLower.includes('type')) {
-                                consultationText += cellValue + '\n';
-                            }
-                            else if (cellValue.match(/(Face to face consultation|Telephone consultation|Phone consultation|Home visit|Video consultation)/i)) {
-                                consultationText += cellValue + '\n';
-                            }
-                            // Problem/Diagnosis
-                            else if (headerLower.includes('problem') || headerLower.includes('diagnosis')) {
-                                consultationText += 'Problem\n';
-                                consultationText += cellValue + '\n';
-                            }
-                            // History
-                            else if (headerLower.includes('history') || headerLower.includes('hx')) {
-                                consultationText += 'History\n';
-                                consultationText += cellValue + '\n';
-                            }
-                            // Examination
-                            else if (headerLower.includes('examination') || headerLower.includes('exam') || headerLower.includes('o/e')) {
-                                consultationText += 'Examination\n';
-                                consultationText += cellValue + '\n';
-                            }
-                            // Comment/Notes
-                            else if (headerLower.includes('comment') || headerLower.includes('note') || headerLower.includes('management')) {
-                                consultationText += 'Comment\n';
-                                consultationText += cellValue + '\n';
-                            }
-                            // Medication/Prescription
-                            else if (headerLower.includes('medication') || headerLower.includes('prescription') || 
-                                     headerLower.includes('drug') || headerLower.includes('medicine')) {
-                                // Medications might be in multiple columns (name, dose, instructions)
-                                consultationText += cellValue + '\n';
-                            }
-                            // Plan
-                            else if (headerLower.includes('plan')) {
-                                consultationText += 'Plan\n';
-                                consultationText += cellValue + '\n';
-                            }
-                            // Generic - just add the value with the header as context
-                            else {
-                                // For other columns, use the header as the section name
-                                const sectionName = header.charAt(0).toUpperCase() + header.slice(1);
-                                consultationText += sectionName + '\n';
-                                consultationText += cellValue + '\n';
+                        const identifier = row[identifierColumn];
+                        if (!identifier) continue;
+                        
+                        if (!groupedData[identifier]) {
+                            groupedData[identifier] = [];
+                        }
+                        groupedData[identifier].push(row);
+                    }
+                    
+                    console.log('Grouped consultations:', Object.keys(groupedData).length);
+                    
+                    // Process each group as a consultation
+                    let consultationText = '';
+                    let consultationCount = 0;
+                    
+                    for (let identifier in groupedData) {
+                        const rows = groupedData[identifier];
+                        consultationCount++;
+                        
+                        // Add the identifier (UUID) once at the start of the consultation
+                        consultationText += identifier + '\n';
+                        
+                        // Process all rows in this group
+                        for (let row of rows) {
+                            for (let header of headers) {
+                                // Skip the identifier column since we already added it
+                                if (header === identifierColumn) continue;
+                                
+                                const value = row[header];
+                                if (!value || value.toString().trim() === '') continue;
+                                
+                                const cellValue = value.toString().trim();
+                                const headerLower = header.toLowerCase();
+                                
+                                // Date columns
+                                if (headerLower.includes('date') || headerLower.includes('time')) {
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Consultation type
+                                else if (headerLower.includes('consultation') && headerLower.includes('type')) {
+                                    consultationText += cellValue + '\n';
+                                }
+                                else if (cellValue.match(/(Face to face consultation|Telephone consultation|Phone consultation|Home visit|Video consultation)/i)) {
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Problem/Diagnosis
+                                else if (headerLower.includes('problem') || headerLower.includes('diagnosis')) {
+                                    consultationText += 'Problem\n';
+                                    consultationText += cellValue + '\n';
+                                }
+                                // History
+                                else if (headerLower.includes('history') || headerLower.includes('hx')) {
+                                    consultationText += 'History\n';
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Examination
+                                else if (headerLower.includes('examination') || headerLower.includes('exam') || headerLower.includes('o/e')) {
+                                    consultationText += 'Examination\n';
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Comment/Notes
+                                else if (headerLower.includes('comment') || headerLower.includes('note') || headerLower.includes('management')) {
+                                    consultationText += 'Comment\n';
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Medication/Prescription
+                                else if (headerLower.includes('medication') || headerLower.includes('prescription') || 
+                                         headerLower.includes('drug') || headerLower.includes('medicine')) {
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Plan
+                                else if (headerLower.includes('plan')) {
+                                    consultationText += 'Plan\n';
+                                    consultationText += cellValue + '\n';
+                                }
+                                // Generic - just add the value with the header as context
+                                else {
+                                    consultationText += cellValue + '\n';
+                                }
                             }
                         }
                         
@@ -891,7 +910,7 @@
                     displayValidationIssues(issues);
                     updateStartButton();
                     
-                    alert(`✅ Excel file loaded successfully!\n\nFound ${jsonData.length} row(s) of data.\nHeaders detected: ${headers.join(', ')}\n\nPlease review the consultation data below.`);
+                    alert(`✅ Excel file loaded successfully!\n\nFound ${consultationCount} consultation(s) (grouped by ${identifierColumn}).\nTotal rows processed: ${jsonData.length}\nHeaders detected: ${headers.join(', ')}\n\nPlease review the consultation data below.`);
                     
                 } catch (error) {
                     console.error('Error parsing Excel file:', error);
