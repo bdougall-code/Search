@@ -1374,79 +1374,141 @@
             // Remove duplicate consultation type occurrences (keep first, remove rest)
             if (consultationType) {
                 const firstOccurrence = text.indexOf(consultationType);
-                // Remove all other occurrences after the first one
                 const beforeFirst = text.substring(0, firstOccurrence + consultationType.length);
                 const afterFirst = text.substring(firstOccurrence + consultationType.length);
                 const cleanedAfter = afterFirst.replace(new RegExp(consultationType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
                 text = beforeFirst + cleanedAfter;
             }
             
-            // Split text into lines
-            let lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            // Replace multiple spaces with single space
+            text = text.replace(/\s{2,}/g, ' ');
             
             // Section headers to look for
             const sectionHeaders = ['Problem', 'History', 'Examination', 'O/E', 'O/E - blood pressure reading', 
                                    'Comment', 'Management', 'Plan', 'Diagnosis', 'Impression', 'Assessment'];
             
-            // Parse and group content by sections
-            let formatted = '';
-            let currentSection = '';
-            let dateAdded = false;
+            // Create a structured object to hold sections
+            const sections = {};
+            let currentSection = 'General';
+            let dateText = '';
+            let consultationTypeText = '';
+            const medications = [];
             
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
+            // Extract date from start of text
+            const dateMatch = text.match(/^(\d{1,2}-[A-Za-z]{3}-\d{4}(\s+\d{1,2}:\d{2})?)/);
+            if (dateMatch) {
+                dateText = dateMatch[1];
+                text = text.substring(dateMatch[0].length).trim();
+            }
+            
+            // Extract consultation type if present at start
+            if (consultationType && text.startsWith(consultationType)) {
+                consultationTypeText = consultationType;
+                text = text.substring(consultationType.length).trim();
+            }
+            
+            // Split remaining text into tokens (words/phrases)
+            const tokens = text.split(/\s+/);
+            let buffer = '';
+            
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
                 
-                // Check if this is the date line
-                if (!dateAdded && /^\d{1,2}-[A-Za-z]{3}-\d{4}/.test(line)) {
-                    formatted += `<strong style="color: #2193b0;">${line}</strong>\n\n`;
-                    dateAdded = true;
-                    continue;
-                }
-                
-                // Check if line starts with a section header
-                let isHeader = false;
+                // Check if this token matches a section header
+                let matchedHeader = null;
                 for (let header of sectionHeaders) {
-                    // Check if line starts with header (case insensitive)
-                    const headerRegex = new RegExp(`^${header}\\s*:?\\s*`, 'i');
-                    if (headerRegex.test(line)) {
-                        isHeader = true;
-                        // Extract section name and content
-                        const contentAfterHeader = line.replace(headerRegex, '').trim();
-                        currentSection = header;
-                        formatted += `\n<strong style="color: #667eea;">${header}:</strong>\n`;
-                        if (contentAfterHeader) {
-                            formatted += `  ${contentAfterHeader}\n`;
-                        }
+                    if (token.toLowerCase() === header.toLowerCase() || 
+                        token.toLowerCase() === (header + ':').toLowerCase()) {
+                        matchedHeader = header;
                         break;
                     }
                 }
                 
-                // If not a header, check if it contains a header mid-line
-                if (!isHeader) {
-                    let foundMidHeader = false;
-                    for (let header of sectionHeaders) {
-                        const midHeaderRegex = new RegExp(`\\s+${header}\\s+`, 'i');
-                        if (midHeaderRegex.test(line)) {
-                            // Split at the header
-                            const parts = line.split(midHeaderRegex);
-                            if (parts[0].trim()) {
-                                formatted += `  ${parts[0].trim()}\n`;
+                if (matchedHeader) {
+                    // Save previous buffer to current section
+                    if (buffer.trim()) {
+                        if (!sections[currentSection]) sections[currentSection] = [];
+                        sections[currentSection].push(buffer.trim());
+                    }
+                    // Switch to new section
+                    currentSection = matchedHeader;
+                    buffer = '';
+                } else {
+                    // Add token to buffer
+                    buffer += (buffer ? ' ' : '') + token;
+                    
+                    // Check if this looks like medication (ends with number for dosage or has "mg", "tablets", etc.)
+                    if (i < tokens.length - 1) {
+                        const nextToken = tokens[i + 1];
+                        const isMedicationLine = /^\d+$/.test(nextToken) || 
+                                                /^(mg|ml|tablets|capsules|daily|twice|once|use|take)/i.test(nextToken);
+                        
+                        // Look ahead to gather full medication entry
+                        if (isMedicationLine && buffer.length > 10) {
+                            let medEntry = buffer;
+                            let j = i + 1;
+                            // Gather next few tokens that look like dosage/instructions
+                            while (j < tokens.length && j < i + 10) {
+                                const t = tokens[j];
+                                if (sectionHeaders.some(h => t.toLowerCase() === h.toLowerCase())) {
+                                    break;
+                                }
+                                medEntry += ' ' + t;
+                                j++;
+                                // Stop after getting dosage and instructions
+                                if (/daily|prn|needed|weeks|days|morning|evening|night/i.test(t)) {
+                                    break;
+                                }
                             }
-                            formatted += `\n<strong style="color: #667eea;">${header}:</strong>\n`;
-                            if (parts[1] && parts[1].trim()) {
-                                formatted += `  ${parts[1].trim()}\n`;
-                            }
-                            foundMidHeader = true;
-                            currentSection = header;
-                            break;
+                            medications.push(medEntry.trim());
+                            // Skip the tokens we consumed
+                            i = j - 1;
+                            buffer = '';
                         }
                     }
-                    
-                    // Regular content line (not a header)
-                    if (!foundMidHeader) {
-                        formatted += `  ${line}\n`;
-                    }
                 }
+            }
+            
+            // Save final buffer
+            if (buffer.trim()) {
+                if (!sections[currentSection]) sections[currentSection] = [];
+                sections[currentSection].push(buffer.trim());
+            }
+            
+            // Build formatted output
+            let formatted = '';
+            
+            // Add date
+            if (dateText) {
+                formatted += `<strong style="color: #2193b0;">${dateText}</strong>\n`;
+            }
+            
+            // Add consultation type
+            if (consultationTypeText) {
+                formatted += `<strong style="color: #2193b0;">${consultationTypeText}</strong>\n\n`;
+            }
+            
+            // Add sections in logical order
+            const sectionOrder = ['Problem', 'History', 'Examination', 'O/E', 'O/E - blood pressure reading', 
+                                 'Diagnosis', 'Assessment', 'Impression', 'Management', 'Plan', 'Comment', 'General'];
+            
+            for (let sectionName of sectionOrder) {
+                if (sections[sectionName] && sections[sectionName].length > 0) {
+                    formatted += `<strong style="color: #667eea;">${sectionName}:</strong>\n`;
+                    for (let content of sections[sectionName]) {
+                        formatted += `  ${content}\n`;
+                    }
+                    formatted += '\n';
+                }
+            }
+            
+            // Add medications section if any found
+            if (medications.length > 0) {
+                formatted += `<strong style="color: #667eea;">Medication:</strong>\n`;
+                for (let med of medications) {
+                    formatted += `  ${med}\n`;
+                }
+                formatted += '\n';
             }
             
             // Escape HTML to prevent injection but preserve our formatting tags
