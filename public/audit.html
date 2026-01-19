@@ -834,16 +834,16 @@
                         const rows = groupedData[identifier];
                         consultationCount++;
                         
-                        // Add the identifier (UUID) once at the start of the consultation
-                        consultationText += identifier + '\n';
+                        // Add the identifier (UUID)
+                        consultationText += identifier + '\t\n';
                         
-                        // Add date and consultation type from first row (they should be same for all rows)
+                        // Add date and consultation type from first row
                         const firstRow = rows[0];
                         for (let header of headers) {
                             const headerLower = header.toLowerCase();
                             if (headerLower.includes('date') && !headerLower.includes('review')) {
                                 const dateValue = firstRow[header];
-                                if (dateValue) consultationText += dateValue + '\n';
+                                if (dateValue) consultationText += dateValue + '\t\n';
                                 break;
                             }
                         }
@@ -852,54 +852,98 @@
                             const headerLower = header.toLowerCase();
                             if (headerLower.includes('type') && headerLower.includes('consultation')) {
                                 const typeValue = firstRow[header];
-                                if (typeValue) consultationText += typeValue + '\n';
+                                if (typeValue) consultationText += typeValue + '\t\n';
                                 break;
                             }
                         }
                         
-                        // Process each row for content
+                        // Group rows by section heading
+                        const sections = {};
+                        const medications = [];
+                        
                         for (let row of rows) {
-                            // Get the section heading (e.g., "Problem", "History", "Examination")
+                            // Get section heading
                             const sectionHeading = row["Clinical Codes' Consultation Heading"] || 
                                                   row["Consultation Heading"] ||
-                                                  row[headers[3]]; // Column 4
+                                                  row[headers[3]];
                             
-                            if (sectionHeading && sectionHeading.trim()) {
-                                consultationText += sectionHeading.trim() + '\n';
-                            }
-                            
-                            // Get the code term if present
-                            const codeTerm = row["Clinical Codes' Code Term"] || 
-                                           row["Code Term"] ||
-                                           row[headers[4]]; // Column 5
-                            if (codeTerm && codeTerm.trim()) {
-                                consultationText += codeTerm.trim() + '\n';
-                            }
-                            
-                            // Get the associated text (main content)
-                            const associatedText = row["Clinical Codes' Associated Text"] || 
-                                                 row["Associated Text"] ||
-                                                 row[headers[5]]; // Column 6
-                            if (associatedText && associatedText.trim()) {
-                                consultationText += associatedText.trim() + '\n';
-                            }
-                            
-                            // Get medication information if present
+                            // Check for medications
                             const medName = row["Name, Dosage and Quantity"] || 
                                           row["Medication"] ||
-                                          row[headers[9]]; // Column 10
+                                          row[headers[9]];
+                            const medQuantity = row["Quantity"] || row[headers[10]];
+                            const medDose = row["Dose"] || row[headers[11]];
+                            
                             if (medName && medName.trim()) {
-                                consultationText += medName.trim() + '\n';
+                                medications.push({
+                                    name: medName.trim(),
+                                    quantity: medQuantity ? medQuantity.toString().trim() : '',
+                                    dose: medDose ? medDose.trim() : ''
+                                });
                             }
                             
-                            const medQuantity = row["Quantity"] || row[headers[10]]; // Column 11
-                            if (medQuantity && medQuantity.toString().trim()) {
-                                consultationText += medQuantity.toString().trim() + '\n';
+                            // Process clinical content
+                            if (sectionHeading && sectionHeading.trim()) {
+                                const section = sectionHeading.trim();
+                                if (!sections[section]) {
+                                    sections[section] = [];
+                                }
+                                
+                                const codeTerm = row["Clinical Codes' Code Term"] || 
+                                               row["Code Term"] ||
+                                               row[headers[4]];
+                                const associatedText = row["Clinical Codes' Associated Text"] || 
+                                                     row["Associated Text"] ||
+                                                     row[headers[5]];
+                                
+                                // Handle observation values for special cases (e.g., blood pressure)
+                                const value1 = row["Clinical Codes' Value"] || row[headers[6]];
+                                const value2 = row["Clinical Codes' Secondary Value"] || row[headers[7]];
+                                const valueUnit = row["Clinical Codes' Secondary Value Unit of Measure"] || row[headers[8]];
+                                
+                                let content = '';
+                                if (codeTerm && codeTerm.trim()) {
+                                    content = codeTerm.trim();
+                                    // Add observation values if present
+                                    if (value1 || value2) {
+                                        content += '\t\t' + (value1 || '') + '\t' + (value2 || '');
+                                        if (valueUnit && valueUnit.trim()) {
+                                            content += '\t' + valueUnit.trim();
+                                        }
+                                    }
+                                }
+                                if (associatedText && associatedText.trim()) {
+                                    if (content) content += '\n';
+                                    content += associatedText.trim();
+                                }
+                                
+                                if (content) {
+                                    sections[section].push(content);
+                                }
                             }
-                            
-                            const medDose = row["Dose"] || row[headers[11]]; // Column 12
-                            if (medDose && medDose.trim()) {
-                                consultationText += medDose.trim() + '\n';
+                        }
+                        
+                        // Output sections in order
+                        for (let section in sections) {
+                            consultationText += section + '\t\t ';
+                            if (sections[section].length > 0) {
+                                consultationText += sections[section][0] + '\n';
+                                for (let i = 1; i < sections[section].length; i++) {
+                                    consultationText += '\t\t\t\t\t\t\t\n' + sections[section][i] + '\n';
+                                }
+                            } else {
+                                consultationText += '\n';
+                            }
+                        }
+                        
+                        // Add medications section if any
+                        if (medications.length > 0) {
+                            consultationText += '\nMedication\n';
+                            for (let med of medications) {
+                                consultationText += med.name;
+                                if (med.quantity) consultationText += '\t' + med.quantity;
+                                if (med.dose) consultationText += '\t' + med.dose;
+                                consultationText += '\n';
                             }
                         }
                         
