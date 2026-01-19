@@ -989,6 +989,23 @@
             const audit = auditsData.find(a => a.referenceNumber === referenceNumber);
             if (!audit) return;
 
+            // Show security warning before download
+            const userConfirmed = confirm(
+                '⚠️ SECURITY NOTICE\n\n' +
+                'Please ensure you download this report to a secure, non-shared computer.\n\n' +
+                'Although this report does not contain full patient identifiable data, ' +
+                'it includes sensitive clinical assessment information and should be:\n\n' +
+                '  • Stored on a secure device\n' +
+                '  • Not shared with unauthorized persons\n' +
+                '  • Handled in accordance with your organization\'s data protection policies\n' +
+                '  • Deleted securely when no longer needed\n\n' +
+                'Do you wish to proceed with the download?'
+            );
+
+            if (!userConfirmed) {
+                return; // User cancelled the download
+            }
+
             // Show loading state
             const btn = event.target.closest('button');
             const originalText = btn.innerHTML;
