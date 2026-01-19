@@ -72,6 +72,23 @@ class AssessmentService {
    * @returns {Promise<Object>}
    */
   async assessSingleCriterion(consultationText, criterion) {
+    // Check for DNA/Failed encounter first - mark most criteria as not-relevant
+    const isDNAorFailed = this.isDNAorFailedEncounter(consultationText);
+    if (isDNAorFailed) {
+      // For DNA/Failed encounters, only safety netting (criterion 11) is relevant
+      // All other criteria should be marked as not-relevant
+      if (criterion.id !== 11) {
+        return {
+          criterionId: criterion.id,
+          criterionTitle: criterion.title,
+          rating: 'not-relevant',
+          explanation: 'This is a Did Not Attend (DNA) or failed encounter. Most clinical criteria are not applicable, but safety netting should still be assessed.',
+          evidence: this.extractEvidence(consultationText, criterion)
+        };
+      }
+      // Criterion 11 (safety netting) will continue to be assessed normally for DNA
+    }
+    
     // Special handling for criterion 2 - Read coding
     if (criterion.id === 2) {
       const hasReadCode = this.checkForReadCode(consultationText);
@@ -194,6 +211,21 @@ class AssessmentService {
     
     const lowerText = consultationText.toLowerCase();
     return telephoneKeywords.some(keyword => lowerText.includes(keyword));
+  }
+
+  /**
+   * Check if consultation is a DNA (Did Not Attend) or failed encounter
+   */
+  isDNAorFailedEncounter(consultationText) {
+    const dnaKeywords = [
+      'did not attend', 'dna', 'did not show', 'failed to attend',
+      'patient did not attend', 'no show', 'didn\'t attend',
+      'failed encounter', 'failed appointment', 'missed appointment',
+      'unable to contact', 'no answer', 'failed to answer'
+    ];
+    
+    const lowerText = consultationText.toLowerCase();
+    return dnaKeywords.some(keyword => lowerText.includes(keyword));
   }
 
   /**
