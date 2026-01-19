@@ -837,63 +837,69 @@
                         // Add the identifier (UUID) once at the start of the consultation
                         consultationText += identifier + '\n';
                         
-                        // Process all rows in this group
+                        // Add date and consultation type from first row (they should be same for all rows)
+                        const firstRow = rows[0];
+                        for (let header of headers) {
+                            const headerLower = header.toLowerCase();
+                            if (headerLower.includes('date') && !headerLower.includes('review')) {
+                                const dateValue = firstRow[header];
+                                if (dateValue) consultationText += dateValue + '\n';
+                                break;
+                            }
+                        }
+                        
+                        for (let header of headers) {
+                            const headerLower = header.toLowerCase();
+                            if (headerLower.includes('type') && headerLower.includes('consultation')) {
+                                const typeValue = firstRow[header];
+                                if (typeValue) consultationText += typeValue + '\n';
+                                break;
+                            }
+                        }
+                        
+                        // Process each row for content
                         for (let row of rows) {
-                            for (let header of headers) {
-                                // Skip the identifier column since we already added it
-                                if (header === identifierColumn) continue;
-                                
-                                const value = row[header];
-                                if (!value || value.toString().trim() === '') continue;
-                                
-                                const cellValue = value.toString().trim();
-                                const headerLower = header.toLowerCase();
-                                
-                                // Date columns
-                                if (headerLower.includes('date') || headerLower.includes('time')) {
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Consultation type
-                                else if (headerLower.includes('consultation') && headerLower.includes('type')) {
-                                    consultationText += cellValue + '\n';
-                                }
-                                else if (cellValue.match(/(Face to face consultation|Telephone consultation|Phone consultation|Home visit|Video consultation)/i)) {
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Problem/Diagnosis
-                                else if (headerLower.includes('problem') || headerLower.includes('diagnosis')) {
-                                    consultationText += 'Problem\n';
-                                    consultationText += cellValue + '\n';
-                                }
-                                // History
-                                else if (headerLower.includes('history') || headerLower.includes('hx')) {
-                                    consultationText += 'History\n';
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Examination
-                                else if (headerLower.includes('examination') || headerLower.includes('exam') || headerLower.includes('o/e')) {
-                                    consultationText += 'Examination\n';
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Comment/Notes
-                                else if (headerLower.includes('comment') || headerLower.includes('note') || headerLower.includes('management')) {
-                                    consultationText += 'Comment\n';
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Medication/Prescription
-                                else if (headerLower.includes('medication') || headerLower.includes('prescription') || 
-                                         headerLower.includes('drug') || headerLower.includes('medicine')) {
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Plan
-                                else if (headerLower.includes('plan')) {
-                                    consultationText += 'Plan\n';
-                                    consultationText += cellValue + '\n';
-                                }
-                                // Generic - just add the value with the header as context
-                                else {
-                                    consultationText += cellValue + '\n';
-                                }
+                            // Get the section heading (e.g., "Problem", "History", "Examination")
+                            const sectionHeading = row["Clinical Codes' Consultation Heading"] || 
+                                                  row["Consultation Heading"] ||
+                                                  row[headers[3]]; // Column 4
+                            
+                            if (sectionHeading && sectionHeading.trim()) {
+                                consultationText += sectionHeading.trim() + '\n';
+                            }
+                            
+                            // Get the code term if present
+                            const codeTerm = row["Clinical Codes' Code Term"] || 
+                                           row["Code Term"] ||
+                                           row[headers[4]]; // Column 5
+                            if (codeTerm && codeTerm.trim()) {
+                                consultationText += codeTerm.trim() + '\n';
+                            }
+                            
+                            // Get the associated text (main content)
+                            const associatedText = row["Clinical Codes' Associated Text"] || 
+                                                 row["Associated Text"] ||
+                                                 row[headers[5]]; // Column 6
+                            if (associatedText && associatedText.trim()) {
+                                consultationText += associatedText.trim() + '\n';
+                            }
+                            
+                            // Get medication information if present
+                            const medName = row["Name, Dosage and Quantity"] || 
+                                          row["Medication"] ||
+                                          row[headers[9]]; // Column 10
+                            if (medName && medName.trim()) {
+                                consultationText += medName.trim() + '\n';
+                            }
+                            
+                            const medQuantity = row["Quantity"] || row[headers[10]]; // Column 11
+                            if (medQuantity && medQuantity.toString().trim()) {
+                                consultationText += medQuantity.toString().trim() + '\n';
+                            }
+                            
+                            const medDose = row["Dose"] || row[headers[11]]; // Column 12
+                            if (medDose && medDose.trim()) {
+                                consultationText += medDose.trim() + '\n';
                             }
                         }
                         
