@@ -1364,18 +1364,94 @@
             // Remove UUID if present at the start
             text = text.replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\s+/i, '');
             
-            // Replace multiple spaces/tabs with single space for cleaner display
-            text = text.replace(/\s{2,}/g, ' ');
+            // Extract date and consultation type (only once at the start)
+            let consultationType = '';
+            const consultationTypeMatch = text.match(/(Face to face consultation|Telephone consultation|Phone consultation|Home visit|Video consultation)/i);
+            if (consultationTypeMatch) {
+                consultationType = consultationTypeMatch[0];
+            }
             
-            // Add line breaks before common section headers for better readability
-            text = text.replace(/\s+(Problem|History|Examination|O\/E|Comment|Management|Plan|Diagnosis|Impression|Assessment)/gi, '\n\n$1');
+            // Remove duplicate consultation type occurrences (keep first, remove rest)
+            if (consultationType) {
+                const firstOccurrence = text.indexOf(consultationType);
+                // Remove all other occurrences after the first one
+                const beforeFirst = text.substring(0, firstOccurrence + consultationType.length);
+                const afterFirst = text.substring(firstOccurrence + consultationType.length);
+                const cleanedAfter = afterFirst.replace(new RegExp(consultationType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
+                text = beforeFirst + cleanedAfter;
+            }
             
-            // Add line break after date for better structure
-            text = text.replace(/^(\d{1,2}-[A-Za-z]{3}-\d{4}(\s+\d{1,2}:\d{2})?)\s+/, '$1\n\n');
+            // Split text into lines
+            let lines = text.split('\n').map(line => line.trim()).filter(line => line);
             
-            // Escape HTML to prevent injection
+            // Section headers to look for
+            const sectionHeaders = ['Problem', 'History', 'Examination', 'O/E', 'O/E - blood pressure reading', 
+                                   'Comment', 'Management', 'Plan', 'Diagnosis', 'Impression', 'Assessment'];
+            
+            // Parse and group content by sections
+            let formatted = '';
+            let currentSection = '';
+            let dateAdded = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                // Check if this is the date line
+                if (!dateAdded && /^\d{1,2}-[A-Za-z]{3}-\d{4}/.test(line)) {
+                    formatted += `<strong style="color: #2193b0;">${line}</strong>\n\n`;
+                    dateAdded = true;
+                    continue;
+                }
+                
+                // Check if line starts with a section header
+                let isHeader = false;
+                for (let header of sectionHeaders) {
+                    // Check if line starts with header (case insensitive)
+                    const headerRegex = new RegExp(`^${header}\\s*:?\\s*`, 'i');
+                    if (headerRegex.test(line)) {
+                        isHeader = true;
+                        // Extract section name and content
+                        const contentAfterHeader = line.replace(headerRegex, '').trim();
+                        currentSection = header;
+                        formatted += `\n<strong style="color: #667eea;">${header}:</strong>\n`;
+                        if (contentAfterHeader) {
+                            formatted += `  ${contentAfterHeader}\n`;
+                        }
+                        break;
+                    }
+                }
+                
+                // If not a header, check if it contains a header mid-line
+                if (!isHeader) {
+                    let foundMidHeader = false;
+                    for (let header of sectionHeaders) {
+                        const midHeaderRegex = new RegExp(`\\s+${header}\\s+`, 'i');
+                        if (midHeaderRegex.test(line)) {
+                            // Split at the header
+                            const parts = line.split(midHeaderRegex);
+                            if (parts[0].trim()) {
+                                formatted += `  ${parts[0].trim()}\n`;
+                            }
+                            formatted += `\n<strong style="color: #667eea;">${header}:</strong>\n`;
+                            if (parts[1] && parts[1].trim()) {
+                                formatted += `  ${parts[1].trim()}\n`;
+                            }
+                            foundMidHeader = true;
+                            currentSection = header;
+                            break;
+                        }
+                    }
+                    
+                    // Regular content line (not a header)
+                    if (!foundMidHeader) {
+                        formatted += `  ${line}\n`;
+                    }
+                }
+            }
+            
+            // Escape HTML to prevent injection but preserve our formatting tags
             const div = document.createElement('div');
-            div.textContent = text;
+            div.innerHTML = formatted;
             return div.innerHTML;
         }
 
