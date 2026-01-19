@@ -925,15 +925,24 @@
                         
                         // Output sections in order
                         for (let section in sections) {
-                            consultationText += section + '\t\t ';
-                            if (sections[section].length > 0) {
-                                consultationText += sections[section][0] + '\n';
-                                for (let i = 1; i < sections[section].length; i++) {
-                                    consultationText += '\t\t\t\t\t\t\t\n' + sections[section][i] + '\n';
-                                }
+                            if (sections[section].length === 0) continue;
+                            
+                            // Check if all content is short enough for single line
+                            const allContent = sections[section].join('\n');
+                            const hasMultipleLines = sections[section].length > 1 || sections[section][0].includes('\n');
+                            
+                            if (!hasMultipleLines && sections[section][0].length < 100) {
+                                // Single line format: Section\tContent\n
+                                consultationText += section + '\t' + sections[section][0] + '\n';
                             } else {
-                                consultationText += '\n';
+                                // Multi-line format: Section\t\t \n then content lines
+                                consultationText += section + '\t\t \n';
+                                for (let content of sections[section]) {
+                                    consultationText += content + '\n';
+                                }
                             }
+                            // Add spacing between sections
+                            consultationText += '\t\t\t\t\t\t\t\t\t\t\t\n';
                         }
                         
                         // Add medications section if any
