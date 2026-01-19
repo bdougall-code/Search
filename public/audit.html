@@ -809,10 +809,21 @@
                     const headers = Object.keys(jsonData[0]);
                     console.log('Excel headers:', headers);
                     
-                    // Group rows by the first column (Anonymised identifier)
+                    // Forward-fill the identifier column (first column may be blank for continuation rows)
                     const identifierColumn = headers[0];
                     console.log('Grouping by identifier column:', identifierColumn);
                     
+                    let currentIdentifier = null;
+                    for (let row of jsonData) {
+                        if (row[identifierColumn] && row[identifierColumn].trim()) {
+                            currentIdentifier = row[identifierColumn].trim();
+                        } else if (currentIdentifier) {
+                            // Fill in the identifier for continuation rows
+                            row[identifierColumn] = currentIdentifier;
+                        }
+                    }
+                    
+                    // Group rows by the first column (Anonymised identifier)
                     const groupedData = {};
                     for (let row of jsonData) {
                         const identifier = row[identifierColumn];
