@@ -119,6 +119,7 @@ class AuditService {
       ).then(assessment => ({
         consultationNumber: i + 1,
         consultationDate: consultation.date,
+        consultationText: consultation.fullText,
         assessment
       }));
     });
@@ -193,6 +194,7 @@ class AuditService {
         ).then(assessment => ({
           consultationNumber,
           consultationDate: consultation.date,
+          consultationText: consultation.fullText,
           assessment
         }));
       });

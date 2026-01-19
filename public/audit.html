@@ -1312,6 +1312,11 @@
                         </div>
                     </div>
                     <div class="collapsible-content">
+                        <div style="background: #f8f9fa; border-left: 4px solid #2193b0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <h4 style="color: #2193b0; margin-bottom: 15px; font-size: 1.1em;">📄 Original Consultation Text</h4>
+                            <div style="background: white; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre-wrap; color: #333; max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0;">${formatConsultationText(consultation.consultationText || 'Consultation text not available')}</div>
+                        </div>
+
                         <div style="margin-bottom: 20px;">
                             <strong>Overall Summary:</strong>
                             <p style="margin-top: 10px; line-height: 1.6;">${assessment.overallSummary}</p>
@@ -1351,6 +1356,27 @@
             `;
 
             return html;
+        }
+
+        function formatConsultationText(text) {
+            if (!text) return 'Consultation text not available';
+            
+            // Remove UUID if present at the start
+            text = text.replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\s+/i, '');
+            
+            // Replace multiple spaces/tabs with single space for cleaner display
+            text = text.replace(/\s{2,}/g, ' ');
+            
+            // Add line breaks before common section headers for better readability
+            text = text.replace(/\s+(Problem|History|Examination|O\/E|Comment|Management|Plan|Diagnosis|Impression|Assessment)/gi, '\n\n$1');
+            
+            // Add line break after date for better structure
+            text = text.replace(/^(\d{1,2}-[A-Za-z]{3}-\d{4}(\s+\d{1,2}:\d{2})?)\s+/, '$1\n\n');
+            
+            // Escape HTML to prevent injection
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function toggleCollapsible(header) {
