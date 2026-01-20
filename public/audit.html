@@ -679,20 +679,20 @@
             <h2 style="margin-bottom: 10px; color: #1e3c72;">Conduct Audit</h2>
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: center;">
                 <strong>📋 Quick Guide:</strong> 
-                <span style="opacity: 0.95;">1️⃣ Enter Reference Number → 2️⃣ Enter Doctor Initials → 3️⃣ Select Review Type → 4️⃣ Paste Consultation Notes → ✅ Start Audit</span>
+                <span style="opacity: 0.95;">1️⃣ Enter Date → 2️⃣ Enter Doctor Initials → 3️⃣ Select Review Type → 4️⃣ Paste Consultation Notes → ✅ Start Audit</span>
             </div>
 
             <div class="doctor-info-section">
-                <label for="referenceNumber">Audit Reference Number: <span style="color: #f44336;">*</span></label>
+                <label for="referenceNumber">Date of Consultations being Audited: <span style="color: #f44336;">*</span></label>
                 <input 
-                    type="text" 
+                    type="date" 
                     id="referenceNumber" 
                     class="doctor-initials-input"
-                    placeholder="e.g., AUD-2026-001"
+                    placeholder="e.g., 17-Dec-2024"
                     maxlength="20"
                     style="width: 250px;"
                     required>
-                <div class="help-text">Enter a unique reference number for this audit (required)</div>
+                <div class="help-text">Enter the date of consultations being audited (required)</div>
             </div>
 
             <div class="doctor-info-section">
@@ -1305,7 +1305,7 @@
             }
 
             if (!referenceNumber) {
-                alert('Please enter an audit reference number');
+                alert('Please enter the date of consultations');
                 return;
             }
 
@@ -1445,7 +1445,7 @@
                     <div class="summary-card">
                         <h2>${results.reviewType} Results</h2>
                         ${results.doctorInitials ? `<p style="text-align: center; margin-top: 10px; font-size: 1.1em; opacity: 0.9;">Doctor: <strong>${results.doctorInitials}</strong></p>` : ''}
-                        ${results.referenceNumber ? `<p style="text-align: center; margin-top: 5px; font-size: 1em; opacity: 0.8;">Reference: <strong>${results.referenceNumber}</strong></p>` : ''}
+                        ${results.referenceNumber ? `<p style="text-align: center; margin-top: 5px; font-size: 1em; opacity: 0.8;">Date: <strong>${results.referenceNumber}</strong></p>` : ''}
                         <div class="summary-grid">
                             <div class="summary-stat">
                                 <div class="summary-stat-value">${results.totalConsultations}</div>
@@ -1934,7 +1934,7 @@
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
             if (results.referenceNumber) {
-                addText(`Reference Number: ${results.referenceNumber}`, 11);
+                addText(`Date: ${results.referenceNumber}`, 11);
             }
             if (results.doctorInitials) {
                 addText(`Doctor: Dr. ${results.doctorInitials}`, 11);
@@ -2058,7 +2058,7 @@
             let report = `MEDICAL CONSULTATION AUDIT REPORT\n`;
             report += `${'='.repeat(60)}\n\n`;
             if (results.referenceNumber) {
-                report += `Reference Number: ${results.referenceNumber}\n`;
+                report += `Date: ${results.referenceNumber}\n`;
             }
             if (results.doctorInitials) {
                 report += `Doctor: ${results.doctorInitials}\n`;
